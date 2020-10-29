@@ -1,0 +1,37 @@
+name: "LEIP/DAEST/UTFPR"
+output_dir: "docs"
+exclude: ["README.md", "\\.sh", "cache"]
+output:
+  html_document:
+    theme: cosmo
+    highlight: default
+    code_folding: hide
+    number_sections: false
+    toc: true
+    toc_depth: 4
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    includes:
+      in_header: analytics.html
+      after_body: footer.html
+navbar:
+  title: "LEIP/DAEST/UTFPR"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "Script das aulas"
+      href: scripts.html
+#    - text: "Dados"
+#      menu:
+#      - text: "hospital.csv"
+#        href: hospital.csv  
+    - text: "Referências"
+      href: referencias.html
+    - text: "Recursos computacionais"
+      href: Como_Instalar_R.html      
+    - text: "Materiais"
+      menu:
+      - text: "Slides"
+      - text: "Aula 1 - Introdução a machine learning"
+        href: slides/Aula1.pdf

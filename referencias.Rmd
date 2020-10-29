@@ -1,0 +1,112 @@
+---
+title: "Referências Bibliográficas"
+output:
+  html_document:
+    toc: false
+---
+
+
+```{css,echo=FALSE}
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+.toc-content {
+padding-left: 0;
+padding-right: 0;
+margin-left: -95px;
+}
+table.dataTable thead th {
+text-align: left;
+}
+table.dataTable tbody th, table.dataTable tbody td {
+padding: 8px 18px;
+}
+table.dataTable thead th, table.dataTable thead td {
+padding: 8px 18px 8px 18px;
+border-bottom: 1px solid #111;
+}
+body {
+font-family: Roboto;
+font-size: 14px;
+line-height: 1.529;
+}
+h1.title {
+padding-top: 30px;
+top: 34px;
+left: 390px;
+width: 832px;
+height: 77px;
+text-align: left;
+letter-spacing: 1px;
+color: #000000;
+opacity: 1;
+margin: 0;
+font-size: 30px;
+line-height: 47px;
+font-family: 'Roboto', sans-serif;
+display: inline-block;
+max-width: 100%;
+}
+h4.date {
+font-family: "Roboto Mono", Roboto, sans-serif;
+font-size: 20px;
+color: #000000;
+line-height: 26px;
+font-weight: 400;
+letter-spacing: 0;
+}
+body::before {
+content: '';
+height: 168px;
+width: 100%;
+position: absolute;
+top: 0;
+left: 0;
+background: #FFFAFA;
+z-index: -1;
+}
+
+@media only screen and (min-width: 1600px) {
+#header {
+background: url(http://www.utfpr.edu.br/icones/cabecalho/logo-utfpr/@@images/image.png) #FFFAFA right center no-repeat padding-box;
+background-size: 210px;
+}
+```
+
+<br>
+<br>
+<br>
+
+## Referências básicas
+
+- Hastie, T., Tibshirani, R. e Friedman, J., **The Elements of Statistical Learning**, 2009.
+
+-	James, G., Witten, D., Hastie, T. e Tibshirani, **An Introduction to Statistical Learning**, 2013.
+
+-	L. Breiman. Statistical modeling: **The two cultures. Statistical Science**, 16(3):199-231, 2001.
+
+-	Lantz, B., **Machine Learning with R**, Packt Publishing, 2013.
+
+-	Tan, Steinbach, and Kumar, **Introduction to Data Mining**, Addison-Wesley, 2005.
+
+-	Mitchell, T. M. (1997). **Machine Learning**. McGraw-Hill.
+
+- Wickham, H.; Grolemund, G. **R for data science: import, tidy, transform, visualize, and model data**. " O'Reilly Media, Inc.", 2016.
+
+
+## Referências *online*
+
+- [The R project for Statistical Computing](http://www.r-project.org):página do programa **R**
+
+- [Curso sobre o uso do R](http://leg.ufpr.br/doku.php/sofware:material-r)
+
+- [RStudio](http://www.rstudio.org) um ambiente para facilitar uso do R
+
+- [Exercícios do livro Noções de Probabilidade e Estatística](http://www.leg.ufpr.br/doku.php/pessoais:felipe) resolvidos com o uso do R (Seções 1,2 e 3)
+
+- [Material bem legal!](https://seeing-theory.brown.edu/)
+
+- [Outros materiais do R](https://www.curso-r.com/material/)
+
+- [Data Science](https://r4ds.had.co.nz/)
+
+- [Jupyter](https://jupyter.org/)
+

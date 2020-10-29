@@ -1,0 +1,29 @@
+---
+title: "Comandos do `R` utilizados nas aulas"
+output:
+  html_document:
+    toc: true
+    code_folding: show
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+#source("setup_knitr.R")
+knitr::opts_chunk$set(echo = TRUE,
+                      comment = NA,
+                      warning = FALSE,
+                      message = FALSE)
+```
+
+
+<br>
+<br>
+<br>
+
+
+
+
+

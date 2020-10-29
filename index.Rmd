@@ -1,0 +1,179 @@
+---
+title: "Introdução a machine learning"
+output:
+  html_document:
+    toc: false
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+source("setup_knitr.R")
+```
+
+
+```{css}
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+.toc-content {
+padding-left: 0;
+padding-right: 0;
+margin-left: -95px;
+}
+table.dataTable thead th {
+text-align: left;
+}
+table.dataTable tbody th, table.dataTable tbody td {
+padding: 8px 18px;
+}
+table.dataTable thead th, table.dataTable thead td {
+padding: 8px 18px 8px 18px;
+border-bottom: 1px solid #111;
+}
+body {
+font-family: Roboto;
+font-size: 14px;
+line-height: 1.529;
+}
+h1.title {
+padding-top: 30px;
+top: 34px;
+left: 390px;
+width: 832px;
+height: 77px;
+text-align: left;
+letter-spacing: 1px;
+color: #000000;
+opacity: 1;
+margin: 0;
+font-size: 30px;
+line-height: 47px;
+font-family: 'Roboto', sans-serif;
+display: inline-block;
+max-width: 100%;
+}
+h4.date {
+font-family: "Roboto Mono", Roboto, sans-serif;
+font-size: 20px;
+color: #000000;
+line-height: 26px;
+font-weight: 400;
+letter-spacing: 0;
+}
+body::before {
+content: '';
+height: 168px;
+width: 100%;
+position: absolute;
+top: 0;
+left: 0;
+background: #FFFAFA;
+z-index: -1;
+}
+#header {
+#    top: 0px;
+#    left: 0px;
+#    width: 100%;
+#    height: 167px;
+#    opacity: 1;
+#    background: url(http://www.utfpr.edu.br/icones/cabecalho/logo-utfpr/@@images/image.png) #FFFAFA right bottom 19px no-repeat padding-box;
+#    background-size: 150px;
+#    margin-bottom: 36px;
+#    z-index: 11;
+#    position: relative;
+#}
+@media only screen and (min-width: 1600px) {
+#header {
+background: url(http://www.utfpr.edu.br/icones/cabecalho/logo-utfpr/@@images/image.png) #FFFAFA right center no-repeat padding-box;
+background-size: 210px;
+}
+```
+
+
+
+```{R, echo=FALSE,warning=FALSE, message=FALSE,eval=FALSE}
+htmltools::img(src = knitr::image_uri(file.path("logo.png")), 
+               alt = 'logo', 
+               style = 'position:absolute; top:0; right:0; padding:10px;')
+               #style = 'float: right;padding-right:10px;height:125px;width:250px')
+
+#knitr::include_graphics("path/to/image.png", dpi = 100)
+
+```
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+
+# **Projeto de Extensão**
+
+
+O projeto de extensão "Introdução a *machine learning*" é ofertado pelo departamento de estatística da UTFPR para a comunidade que tenha interesse no tema.
+
+<div  style="background-color:gold;color:black;padding:20px;">
+
+
+- Datas
+  - Terças-feiras e quintas-feiras às 18h, nos dias 29/10, 03/11, 05/11, 10/11 e 12/11.
+<br>
+<br>
+
+- Local
+  - A modalidade utilizada será a distância e por meio do Google Meet. O link será disponibilizado por e-mail 1 hora antes do evento.
+<br>
+<br>
+
+- Público
+  - Alunos e demais interessados em conhecimentos introdutório a *machine learning* e linguagem `R`.
+<br>
+<br>
+
+</div>
+<br>
+
+# Detalhes da oferta do curso
+
+- **Professor Responsável:**
+    - Felipe E. Barletta Mendes, DAEST/UTFPR - **email: fmendes@utfpr.edu.br**
+
+## Aula 1
+
+- Dia 29/10 as 18:00
+
+  - Conceitos básicos sobre machine learning: Cultura da modelagem dos dados, cultura da modelagem por algoritmos,  definição do objetivo e coleta dos dados.
+      
+
+## Aula 2
+
+- Dia 03/11 as 18:00
+       
+  - Pré-processamentos dos dados, Engenharia de características (**featuring engineering**), técnicas de reamostragem para dados desbalanceados, imputação de dados faltantes (**missing data**).
+      
+
+## Aula 3
+
+- Dia 05/11 as 18:00
+
+  - Tipos de aprendizados: Aprendizado não-supervisionado - Análise de componentes principais e Agrupamento.
+
+## Aula 4
+
+- Dia 10/11 as 18:00
+
+  - Aprendizado supervisionado - algoritmos para classificação e regressão - e combinação de modelos.
+
+
+## Aula 5
+
+- Dia 12/11 as 18:00
+
+
+  - Métricas, avaliação dos modelos, comunicação e automatização.
+   
+
+
+
+  
+    
+    
+    

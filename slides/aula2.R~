@@ -1,0 +1,6 @@
+omega <- 1:6
+omega
+sorteio <- NULL
+i <- 5
+sorteio <- c(sorteio,sample(omega,i,replace=TRUE))
+sorteio
