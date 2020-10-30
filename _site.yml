@@ -22,6 +22,10 @@ navbar:
       href: index.html
     - text: "Script das aulas"
       href: scripts.html
+    - text: "Script Jupyter"
+      href: vital_signs.html 
+    - text: "Desafios"
+      href: desafios.html
 #    - text: "Dados"
 #      menu:
 #      - text: "hospital.csv"

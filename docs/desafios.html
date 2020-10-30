@@ -11,7 +11,7 @@
 
 
 
-<title>Referências Bibliográficas</title>
+<title>Desafios das aulas</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -19,6 +19,9 @@
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
@@ -272,6 +275,75 @@ $(document).ready(function () {
 
 
 
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+}
+
+</style>
+
+
 
 </head>
 
@@ -279,6 +351,16 @@ $(document).ready(function () {
 
 
 <div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
 
 
 
@@ -346,100 +428,32 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Referências Bibliográficas</h1>
+<h1 class="title toc-ignore">Desafios das aulas</h1>
 
 </div>
 
 
-<style type="text/css">
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-.toc-content {
-padding-left: 0;
-padding-right: 0;
-margin-left: -95px;
-}
-table.dataTable thead th {
-text-align: left;
-}
-table.dataTable tbody th, table.dataTable tbody td {
-padding: 8px 18px;
-}
-table.dataTable thead th, table.dataTable thead td {
-padding: 8px 18px 8px 18px;
-border-bottom: 1px solid #111;
-}
-body {
-font-family: Roboto;
-font-size: 14px;
-line-height: 1.529;
-}
-h1.title {
-padding-top: 30px;
-top: 34px;
-left: 390px;
-width: 832px;
-height: 77px;
-text-align: left;
-letter-spacing: 1px;
-color: #000000;
-opacity: 1;
-margin: 0;
-font-size: 30px;
-line-height: 47px;
-font-family: 'Roboto', sans-serif;
-display: inline-block;
-max-width: 100%;
-}
-h4.date {
-font-family: "Roboto Mono", Roboto, sans-serif;
-font-size: 20px;
-color: #000000;
-line-height: 26px;
-font-weight: 400;
-letter-spacing: 0;
-}
-body::before {
-content: '';
-height: 168px;
-width: 100%;
-position: absolute;
-top: 0;
-left: 0;
-background: #FFFAFA;
-z-index: -1;
-}
-
-@media only screen and (min-width: 1600px) {
-#header {
-background: url(http://www.utfpr.edu.br/icones/cabecalho/logo-utfpr/@@images/image.png) #FFFAFA right center no-repeat padding-box;
-background-size: 210px;
-}
-</style>
-<p><br> <br> <br></p>
-<div id="referências-básicas" class="section level2">
-<h2>Referências básicas</h2>
+<p>Abaixo segue os desafios dados em aula. Sugere-se realizá-los para que o aluno consiga absorver melhor o conteúdo dado nas aulas síncronas e também servirá para completar a carga horária do curso e assim obter o certificado.</p>
+<div id="desafio-aula-1" class="section level2">
+<h2>Desafio aula 1</h2>
+<p>Defina um oobjetivo que queira resolver por meio de um modelo de <em>machine learning</em>. Pode ser um problema que queira resolver de fato em seu ambiente acadêmico ou profissional ou crie algo a ser resolvido em possa ter os dados necessários para resolvê-lo.</p>
+<p>Para ajudar a definir seu objetivo e saber onde quer chegar, responda a seguintes perguntas:</p>
 <ul>
-<li><p>Hastie, T., Tibshirani, R. e Friedman, J., <strong>The Elements of Statistical Learning</strong>, 2009.</p></li>
-<li><p>James, G., Witten, D., Hastie, T. e Tibshirani, <strong>An Introduction to Statistical Learning</strong>, 2013.</p></li>
-<li><p>L. Breiman. Statistical modeling: <strong>The two cultures. Statistical Science</strong>, 16(3):199-231, 2001.</p></li>
-<li><p>Lantz, B., <strong>Machine Learning with R</strong>, Packt Publishing, 2013.</p></li>
-<li><p>Tan, Steinbach, and Kumar, <strong>Introduction to Data Mining</strong>, Addison-Wesley, 2005.</p></li>
-<li><p>Mitchell, T. M. (1997). <strong>Machine Learning</strong>. McGraw-Hill.</p></li>
-<li><p>Wickham, H.; Grolemund, G. <strong>R for data science: import, tidy, transform, visualize, and model data</strong>. " O’Reilly Media, Inc.", 2016.</p></li>
+<li><p>1- Qual é o problema?</p></li>
+<li><p>2- Por que o problema precisa ser resolvido?</p></li>
+<li><p>3- Como eu resolvo o problema?</p></li>
 </ul>
+<p>Após entender o problema, responda as perguntas referentes aos dados:</p>
+<ul>
+<li><p>1 -Quais os tipos de dados você tem disponível?</p></li>
+<li><p>2- Quais dados desejáveis não estão disponíveis?</p></li>
+<li><p>3- Quais dados você não precisa para resolver o problema?</p></li>
+</ul>
+<p>Colete seus dados e os armazene para a resolução dos próximos desafios.</p>
+<p>Por fim, elabore um diagrama resumindo seu objetivo e dados como apresentado em aula (Slide12 da aula1).</p>
 </div>
-<div id="referências-online" class="section level2">
-<h2>Referências <em>online</em></h2>
-<ul>
-<li><p><a href="http://www.r-project.org">The R project for Statistical Computing</a>:página do programa <strong>R</strong></p></li>
-<li><p><a href="http://leg.ufpr.br/doku.php/sofware:material-r">Curso sobre o uso do R</a></p></li>
-<li><p><a href="http://www.rstudio.org">RStudio</a> um ambiente para facilitar uso do R</p></li>
-<li><p><a href="http://www.leg.ufpr.br/doku.php/pessoais:felipe">Exercícios do livro Noções de Probabilidade e Estatística</a> resolvidos com o uso do R (Seções 1,2 e 3)</p></li>
-<li><p><a href="https://seeing-theory.brown.edu/">Material bem legal!</a></p></li>
-<li><p><a href="https://www.curso-r.com/material/">Outros materiais do R</a></p></li>
-<li><p><a href="https://r4ds.had.co.nz/">Data Science</a></p></li>
-<li><p><a href="https://jupyter.org/">Jupyter</a></p></li>
-</ul>
+<div id="desafio-aula-2" class="section level2">
+<h2>Desafio aula 2</h2>
 </div>
 
 <center>
@@ -453,6 +467,8 @@ background-size: 210px;
 </center>
 
 
+</div>
+</div>
 
 </div>
 
@@ -486,10 +502,36 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeCodeFolding("hide" === "show");
+  window.initializeCodeFolding("show" === "show");
 });
 </script>
 
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>

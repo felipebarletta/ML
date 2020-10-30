@@ -384,6 +384,12 @@ div.tocify {
   <a href="scripts.html">Script das aulas</a>
 </li>
 <li>
+  <a href="vital_signs.html">Script Jupyter</a>
+</li>
+<li>
+  <a href="desafios.html">Desafios</a>
+</li>
+<li>
   <a href="referencias.html">Referências</a>
 </li>
 <li>
@@ -428,6 +434,86 @@ div.tocify {
 
 
 <p><br> <br> <br></p>
+<div id="coleta-de-dados---exemplo-2" class="section level1">
+<h1>Coleta de dados - exemplo 2</h1>
+<p><img src="img/R_SQL_AWS.png" /></p>
+<div id="coletando-dados-do-s3-aws" class="section level3">
+<h3>Coletando dados do S3 AWS</h3>
+<pre class="r"><code>#### Carrega o pacote para acessar s3 da aws pelo R
+library(&quot;aws.s3&quot;)
+
+#### Credenciais para acessar o S3 na AWS
+source(&#39;credentials.R&#39;)
+
+#### Carregando os dados
+
+save_object(object = &#39;PA_dataset_2020/PA_DATA.RData&#39;,
+            bucket = &#39;machine-learning-laura&#39;,
+            file = &#39;PA_DATA.RData&#39;,
+            region = &#39;us-east-2&#39;)
+
+
+dir()
+load(&#39;PA_DATA.RData&#39;)
+ls()
+head(PA_DATA)
+dim(PA_DATA)</code></pre>
+</div>
+<div id="coletando-os-dados-do-athena---aws" class="section level2">
+<h2>Coletando os dados do Athena - AWS</h2>
+<pre class="r"><code>### Athena - AWS
+
+## ##### Usuário e senha do Athena AWS
+source(&#39;credentials2.R&#39;)
+#conexão via drive ODBC
+#https://db.rstudio.com/dbi/
+con &lt;- DBI::dbConnect(
+   odbc::odbc(),
+   Driver             = &quot;/opt/simba/athenaodbc/lib/64/libathenaodbc_sb64.so&quot;,
+   S3OutputLocation   = &quot;s3://aws.glue.configurations/history.people.old/query_results/&quot;,
+   AwsRegion          = &quot;us-east-1&quot;,
+   AuthenticationType = &quot;athena.barletta&quot;,
+   Schema             = &quot;history_people_old&quot;,
+   UID                = user,
+   PWD                = pass
+   )
+
+## Lista as tabelas
+DBI::dbListTables(con)
+# Lista os campos de uma determinada Tabela
+DBI::dbListFields(con, &quot;e12_medical_record&quot;)
+
+#### Criando as consultas via SQL
+df &lt;- dplyr::tbl(con,
+                 dplyr::sql(&quot;SELECT atendimento_id,
+                             date,
+                             alta_data,
+                             alta_motivo,
+                             data_entrada,
+                             data_nasc,
+                             paciente_id,
+                             setor_id,
+                             setor_nome,
+                             sexo,
+                             clinica,
+                             convenio_nome,
+                             doenca_id,
+                             doenca_nome,
+                             tipo_atendimento
+                      FROM e12_medical_record as t1
+                      LEFT JOIN e12_medical_record_doencas as t2
+                      ON t1.oid = t2.oid LIMIT 100&quot;)
+                 )
+head(df)
+
+class(df)
+
+df &lt;- data.frame(df)
+
+dim(df)
+names(df)</code></pre>
+</div>
+</div>
 
 <center>
   <hr width="100%" size="3px">

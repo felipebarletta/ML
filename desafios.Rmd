@@ -1,0 +1,48 @@
+---
+title: "Desafios das aulas"
+output:
+  html_document:
+    toc: true
+    code_folding: show
+    toc_depth: 2
+    toc_float:
+      collapsed: no
+      smooth_scroll: no
+---
+
+```{r setup, include=FALSE, cache=FALSE}
+#source("setup_knitr.R")
+knitr::opts_chunk$set(echo = TRUE,
+                      comment = NA,
+                      warning = FALSE,
+                      message = FALSE)
+```
+ Abaixo segue os desafios dados em aula. Sugere-se realizá-los para que o aluno consiga absorver melhor o conteúdo dado nas aulas síncronas e também
+servirá para completar a carga horária do curso e assim obter o certificado.
+
+## Desafio aula 1
+
+Defina um oobjetivo que queira resolver por meio de um modelo de *machine learning*. Pode ser um problema que queira resolver de fato em seu ambiente acadêmico ou profissional ou crie algo a ser resolvido em possa ter os dados necessários para resolvê-lo.
+
+Para ajudar a definir seu objetivo e saber onde quer chegar, responda a seguintes perguntas:
+
+- 1- Qual é o problema?
+
+- 2- Por que o problema precisa ser resolvido?
+
+- 3- Como eu resolvo o problema?
+
+
+Após entender o problema, responda as perguntas referentes aos dados:
+
+- 1 -Quais os tipos de dados você tem disponível?
+
+- 2- Quais dados desejáveis não estão disponíveis?
+
+- 3- Quais dados você não precisa para resolver o problema?
+
+Colete seus dados e os armazene para a resolução dos próximos desafios.
+
+Por fim, elabore um diagrama resumindo seu objetivo e dados como apresentado em aula (Slide12 da aula1).
+
+## Desafio aula 2

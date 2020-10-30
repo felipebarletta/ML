@@ -27,3 +27,88 @@ knitr::opts_chunk$set(echo = TRUE,
 
 
 
+# Coleta de dados - exemplo 2
+
+
+![](img/R_SQL_AWS.png)
+
+### Coletando dados do S3 AWS
+```{r s3 ,eval = FALSE}
+#### Carrega o pacote para acessar s3 da aws pelo R
+library("aws.s3")
+
+#### Credenciais para acessar o S3 na AWS
+source('credentials.R')
+
+#### Carregando os dados
+
+save_object(object = 'PA_dataset_2020/PA_DATA.RData',
+            bucket = 'machine-learning-laura',
+            file = 'PA_DATA.RData',
+            region = 'us-east-2')
+
+
+dir()
+load('PA_DATA.RData')
+ls()
+head(PA_DATA)
+dim(PA_DATA)
+```
+
+
+## Coletando os dados do Athena - AWS
+
+
+```{R,athena ,eval = FALSE}
+### Athena - AWS
+
+## ##### Usuário e senha do Athena AWS
+source('credentials2.R')
+#conexão via drive ODBC
+#https://db.rstudio.com/dbi/
+con <- DBI::dbConnect(
+   odbc::odbc(),
+   Driver             = "/opt/simba/athenaodbc/lib/64/libathenaodbc_sb64.so",
+   S3OutputLocation   = "s3://aws.glue.configurations/history.people.old/query_results/",
+   AwsRegion          = "us-east-1",
+   AuthenticationType = "athena.barletta",
+   Schema             = "history_people_old",
+   UID                = user,
+   PWD                = pass
+   )
+
+## Lista as tabelas
+DBI::dbListTables(con)
+# Lista os campos de uma determinada Tabela
+DBI::dbListFields(con, "e12_medical_record")
+
+#### Criando as consultas via SQL
+df <- dplyr::tbl(con,
+                 dplyr::sql("SELECT atendimento_id,
+                             date,
+                             alta_data,
+                             alta_motivo,
+                             data_entrada,
+                             data_nasc,
+                             paciente_id,
+                             setor_id,
+                             setor_nome,
+                             sexo,
+                             clinica,
+                             convenio_nome,
+                             doenca_id,
+                             doenca_nome,
+                             tipo_atendimento
+                      FROM e12_medical_record as t1
+                      LEFT JOIN e12_medical_record_doencas as t2
+                      ON t1.oid = t2.oid LIMIT 100")
+                 )
+head(df)
+
+class(df)
+
+df <- data.frame(df)
+
+dim(df)
+names(df)
+```

@@ -11,29 +11,19 @@
 
 
 
-<title>Referências Bibliográficas</title>
+<title>vital_signs.utf8</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<script src="site_libs/navigation-1.1/codefolding.js"></script>
 <link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
 <link href="site_libs/anchor-sections-1.0/anchor-sections.css" rel="stylesheet" />
 <script src="site_libs/anchor-sections-1.0/anchor-sections.js"></script>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-66454501-8"></script>
-<script>
- window.dataLayer = window.dataLayer || [];
- function gtag(){dataLayer.push(arguments);}
- gtag('js', new Date());
-
- gtag('config', 'UA-66454501-8');
-</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -266,9 +256,6 @@ $(document).ready(function () {
 </style>
 
 <!-- code folding -->
-<style type="text/css">
-.code-folding-btn { margin-bottom: 4px; }
-</style>
 
 
 
@@ -336,121 +323,393 @@ $(document).ready(function () {
 
 <div class="fluid-row" id="header">
 
-<div class="btn-group pull-right">
-<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
-<ul class="dropdown-menu" style="min-width: 50px;">
-<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
-<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
-</ul>
-</div>
 
 
-
-<h1 class="title toc-ignore">Referências Bibliográficas</h1>
 
 </div>
 
 
-<style type="text/css">
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-.toc-content {
-padding-left: 0;
-padding-right: 0;
-margin-left: -95px;
-}
-table.dataTable thead th {
-text-align: left;
-}
-table.dataTable tbody th, table.dataTable tbody td {
-padding: 8px 18px;
-}
-table.dataTable thead th, table.dataTable thead td {
-padding: 8px 18px 8px 18px;
-border-bottom: 1px solid #111;
-}
-body {
-font-family: Roboto;
-font-size: 14px;
-line-height: 1.529;
-}
-h1.title {
-padding-top: 30px;
-top: 34px;
-left: 390px;
-width: 832px;
-height: 77px;
-text-align: left;
-letter-spacing: 1px;
-color: #000000;
-opacity: 1;
-margin: 0;
-font-size: 30px;
-line-height: 47px;
-font-family: 'Roboto', sans-serif;
-display: inline-block;
-max-width: 100%;
-}
-h4.date {
-font-family: "Roboto Mono", Roboto, sans-serif;
-font-size: 20px;
-color: #000000;
-line-height: 26px;
-font-weight: 400;
-letter-spacing: 0;
-}
-body::before {
-content: '';
-height: 168px;
-width: 100%;
-position: absolute;
-top: 0;
-left: 0;
-background: #FFFAFA;
-z-index: -1;
+<div id="extração-de-dados---mongobd-via-python" class="section level1">
+<h1>Extração de dados - mongoBD via <em>python</em></h1>
+<p><img src="python_jupyter_mongoDB.png" /></p>
+<div id="pacotes-necessário-do-python" class="section level2">
+<h2>Pacotes necessário do python</h2>
+<p>Para instalar os pacotes(bibliotecas) no python, basta usar o comando <code>!pip3 install nome_pacote</code> ou <code>!pip3 install requirements.txt</code> em que <em>requirements.txt</em> é um o arquivo texto com os nomes dos pacotes a serem instalados.</p>
+<pre class="python"><code>#!pip3 install -r requirements.txt # Basta rodar uma vez apenas</code></pre>
+<pre class="python"><code>import numpy as np #tarefas matemáticas e machine learning
+import pandas as pd #manipulação de data frames e machine learning
+from pandas import Series, DataFrame 
+from datetime import datetime #manipulação de variáveis em formato de data
+from pymongo import DESCENDING #util para acessar o mongoDB
+from collections import OrderedDict
+pd.set_option(&#39;display.max_columns&#39;, None)# Não limita o número de colunas para visualização
+</code></pre>
+</div>
+<div id="abaixo-um-exemplo-de-como-acessar-o-mongodb" class="section level2">
+<h2>Abaixo um exemplo de como acessar o mongoDB</h2>
+<pre class="python"><code>from pymongo import MongoClient
+def db_connect(ambient):
+
+    if ambient == &quot;prod&quot;:
+        db_uri = &quot;mongodb://credenciais_de_acesso_ao_mongoDB&quot;
+        db_name = &quot;nome_da_base_de_dados&quot;
+
+    client = MongoClient(db_uri)
+    db = client[db_name]
+
+    if not db:
+        print(&quot;ERROR: Couldn&#39;t connect to database&quot;)
+        return None
+
+    return db
+
+db = db_connect(&quot;prod&quot;)</code></pre>
+<pre class="python"><code># Define o período da coleta dos dados
+
+period_start = datetime(2020, 8, 1, 0, 0, 0) 
+period_end =   datetime(2020, 8, 2, 0, 0, 0)
+entity_id = 12
+</code></pre>
+</div>
+<div id="documentos-na-base-de-dados" class="section level2">
+<h2>Documentos na base de dados</h2>
+<pre class="python"><code># Distinct nos &#39;document_types&#39; do banco
+document_types = db.history_people.distinct(&#39;document_type&#39;, {&#39;entidade_id&#39;: entity_id})</code></pre>
+<pre class="python"><code>document_types</code></pre>
+<pre><code>[&#39;medical_record&#39;,
+ &#39;vital_signs&#39;,
+ &#39;exams&#39;,
+ &#39;medicines&#39;,
+ &#39;pharmacy&#39;,
+ &#39;movements&#39;,
+ &#39;alert&#39;]</code></pre>
+</div>
+<div id="consulta-para-extrair-as-informações-de-sinais-vitais" class="section level2">
+<h2>Consulta para extrair as informações de sinais vitais</h2>
+<pre class="python"><code>query = {
+   &#39;entidade_id&#39;: entity_id,
+   &#39;document_type&#39;: &#39;vital_signs&#39;,
+   &#39;date&#39;: {&#39;$gte&#39;: period_start,
+            &#39;$lte&#39;: period_end}
 }
 
-@media only screen and (min-width: 1600px) {
-#header {
-background: url(http://www.utfpr.edu.br/icones/cabecalho/logo-utfpr/@@images/image.png) #FFFAFA right center no-repeat padding-box;
-background-size: 210px;
+limiters = {
+    &#39;_id&#39;: 0,
+    &#39;date&#39;:1,
+    &#39;document.data_coleta&#39;:1,
+    &#39;document.data_liberacao&#39;:1,
+    &#39;document.freq_cardiaca&#39;:1,
+    &#39;document.freq_respiratoria&#39;:1,
+    &#39;document.glicemia_capilar&#39;:1,
+    &#39;document.nivel_consciencia&#39;:1,
+    &#39;document.pa_diastolica&#39;:1,
+    &#39;document.pa_sistolica&#39;:1,
+    &#39;document.sat_o2&#39;:1,
+    &#39;document.temperatura&#39;:1,
+    &#39;document.paciente_id&#39;:1
 }
+
+vs = list(db.history_people.find(query, limiters))</code></pre>
+<div id="tamano-da-amostra" class="section level3">
+<h3>Tamano da amostra</h3>
+<pre class="python"><code>len(vs)</code></pre>
+<pre><code>7469</code></pre>
+</div>
+</div>
+<div id="formatando-os-dados-para-data-frame" class="section level2">
+<h2>Formatando os dados para data frame</h2>
+<div id="dados-de-sinais-vitais" class="section level3">
+<h3>Dados de Sinais vitais</h3>
+<pre class="python"><code>from pandas.io.json import json_normalize </code></pre>
+<pre class="python"><code>### Transformando de formato JSON para data frame
+df_vs = json_normalize(vs)
+### Ordenando por data
+df_vs.sort_values(by=[&#39;date&#39;], inplace=True)
+### Visualizando as  primiras linhas do data frame
+df_vs.head(5)</code></pre>
+<pre><code>&lt;ipython-input-22-51dfdbf79ed6&gt;:2: FutureWarning: pandas.io.json.json_normalize is deprecated, use pandas.json_normalize instead
+  df_vs = json_normalize(vs)</code></pre>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
 </style>
-<p><br> <br> <br></p>
-<div id="referências-básicas" class="section level2">
-<h2>Referências básicas</h2>
-<ul>
-<li><p>Hastie, T., Tibshirani, R. e Friedman, J., <strong>The Elements of Statistical Learning</strong>, 2009.</p></li>
-<li><p>James, G., Witten, D., Hastie, T. e Tibshirani, <strong>An Introduction to Statistical Learning</strong>, 2013.</p></li>
-<li><p>L. Breiman. Statistical modeling: <strong>The two cultures. Statistical Science</strong>, 16(3):199-231, 2001.</p></li>
-<li><p>Lantz, B., <strong>Machine Learning with R</strong>, Packt Publishing, 2013.</p></li>
-<li><p>Tan, Steinbach, and Kumar, <strong>Introduction to Data Mining</strong>, Addison-Wesley, 2005.</p></li>
-<li><p>Mitchell, T. M. (1997). <strong>Machine Learning</strong>. McGraw-Hill.</p></li>
-<li><p>Wickham, H.; Grolemund, G. <strong>R for data science: import, tidy, transform, visualize, and model data</strong>. " O’Reilly Media, Inc.", 2016.</p></li>
-</ul>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th>
+</th>
+<th>
+date
+</th>
+<th>
+document.data_coleta
+</th>
+<th>
+document.data_liberacao
+</th>
+<th>
+document.freq_cardiaca
+</th>
+<th>
+document.freq_respiratoria
+</th>
+<th>
+document.glicemia_capilar
+</th>
+<th>
+document.nivel_consciencia
+</th>
+<th>
+document.pa_diastolica
+</th>
+<th>
+document.pa_sistolica
+</th>
+<th>
+document.paciente_id
+</th>
+<th>
+document.sat_o2
+</th>
+<th>
+document.temperatura
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>
+0
+</th>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01 00:03:45
+</td>
+<td>
+131.0
+</td>
+<td>
+22.0
+</td>
+<td>
+NaN
+</td>
+<td>
+None
+</td>
+<td>
+62.0
+</td>
+<td>
+135.0
+</td>
+<td>
+731032
+</td>
+<td>
+95.0
+</td>
+<td>
+38.1
+</td>
+</tr>
+<tr>
+<th>
+75
+</th>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01 03:02:58
+</td>
+<td>
+86.0
+</td>
+<td>
+16.0
+</td>
+<td>
+NaN
+</td>
+<td>
+None
+</td>
+<td>
+54.0
+</td>
+<td>
+93.0
+</td>
+<td>
+2782882
+</td>
+<td>
+100.0
+</td>
+<td>
+35.9
+</td>
+</tr>
+<tr>
+<th>
+74
+</th>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01 03:02:05
+</td>
+<td>
+117.0
+</td>
+<td>
+16.0
+</td>
+<td>
+87.0
+</td>
+<td>
+None
+</td>
+<td>
+66.0
+</td>
+<td>
+122.0
+</td>
+<td>
+2802042
+</td>
+<td>
+100.0
+</td>
+<td>
+36.2
+</td>
+</tr>
+<tr>
+<th>
+73
+</th>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01 02:54:08
+</td>
+<td>
+100.0
+</td>
+<td>
+24.0
+</td>
+<td>
+NaN
+</td>
+<td>
+None
+</td>
+<td>
+62.0
+</td>
+<td>
+103.0
+</td>
+<td>
+750156
+</td>
+<td>
+97.0
+</td>
+<td>
+38.2
+</td>
+</tr>
+<tr>
+<th>
+72
+</th>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01
+</td>
+<td>
+2020-08-01 02:52:44
+</td>
+<td>
+82.0
+</td>
+<td>
+28.0
+</td>
+<td>
+NaN
+</td>
+<td>
+None
+</td>
+<td>
+67.0
+</td>
+<td>
+128.0
+</td>
+<td>
+1958456
+</td>
+<td>
+92.0
+</td>
+<td>
+36.7
+</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div id="referências-online" class="section level2">
-<h2>Referências <em>online</em></h2>
-<ul>
-<li><p><a href="http://www.r-project.org">The R project for Statistical Computing</a>:página do programa <strong>R</strong></p></li>
-<li><p><a href="http://leg.ufpr.br/doku.php/sofware:material-r">Curso sobre o uso do R</a></p></li>
-<li><p><a href="http://www.rstudio.org">RStudio</a> um ambiente para facilitar uso do R</p></li>
-<li><p><a href="http://www.leg.ufpr.br/doku.php/pessoais:felipe">Exercícios do livro Noções de Probabilidade e Estatística</a> resolvidos com o uso do R (Seções 1,2 e 3)</p></li>
-<li><p><a href="https://seeing-theory.brown.edu/">Material bem legal!</a></p></li>
-<li><p><a href="https://www.curso-r.com/material/">Outros materiais do R</a></p></li>
-<li><p><a href="https://r4ds.had.co.nz/">Data Science</a></p></li>
-<li><p><a href="https://jupyter.org/">Jupyter</a></p></li>
-</ul>
+<pre class="python"><code>len(df_vs)</code></pre>
+<p>7469</p>
+</div>
+<div id="nome-das-variáveis" class="section level3">
+<h3>Nome das variáveis</h3>
+<pre class="python"><code>df_vs.columns</code></pre>
+<p>Index([‘entidade_id’, ‘atendimento_id’, ‘date’, ‘document.data_coleta’, ‘document.data_liberacao’, ‘document.freq_cardiaca’, ‘document.freq_respiratoria’, ‘document.glicemia_capilar’, ‘document.nivel_consciencia’, ‘document.pa_diastolica’, ‘document.pa_sistolica’, ‘document.paciente_id’, ‘document.sat_o2’, ‘document.temperatura’], dtype=‘object’)</p>
+</div>
+<div id="exportando-os-dados-localmente-em-formato-csv" class="section level3">
+<h3>Exportando os dados localmente em formato <code>csv</code></h3>
+<pre class="python"><code>df_vs.to_csv(&#39;nome.csv&#39;, sep = &#39;,&#39;, index = False)</code></pre>
+</div>
+</div>
 </div>
 
-<center>
-  <hr width="100%" size="3px">
-  <p> <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.pt_BR">
-      <img src="img/CC_by-nc-sa_80x15.png" alt="Licença Creative Commons 4.0"> </a>
-  </p>
-  <p> <font size="2"> Este conteúdo
-      está disponível por meio da Licença Creative Commons 4.0 </font>
-  </p>
-</center>
 
 
 
@@ -484,11 +743,6 @@ $(document).ready(function () {
 </script>
 
 <!-- code folding -->
-<script>
-$(document).ready(function () {
-  window.initializeCodeFolding("hide" === "show");
-});
-</script>
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
