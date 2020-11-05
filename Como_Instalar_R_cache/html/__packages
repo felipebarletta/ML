@@ -1,0 +1,14 @@
+base
+dplyr
+ggplot2
+cowplot
+timetk
+lubridate
+zoo
+xts
+PerformanceAnalytics
+TTR
+quantmod
+tidyquant
+tibbletime
+rmarkdown
