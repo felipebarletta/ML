@@ -389,6 +389,19 @@ div.tocify {
 <li>
   <a href="desafios.html">Desafios</a>
 </li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Dados
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="hospital.csv">hospital.csv</a>
+    </li>
+    <li class="dropdown-header">vs.RData</li>
+  </ul>
+</li>
 <li>
   <a href="referencias.html">Referências</a>
 </li>
@@ -434,8 +447,8 @@ div.tocify {
 
 
 <p><br> <br> <br></p>
-<div id="coleta-de-dados---exemplo-2" class="section level1">
-<h1>Coleta de dados - exemplo 2</h1>
+<div id="coleta-de-dados" class="section level1">
+<h1>Coleta de dados</h1>
 <p><img src="img/R_SQL_AWS.png" /></p>
 <div id="coletando-dados-do-s3-aws" class="section level3">
 <h3>Coletando dados do S3 AWS</h3>
@@ -459,8 +472,8 @@ ls()
 head(PA_DATA)
 dim(PA_DATA)</code></pre>
 </div>
-<div id="coletando-os-dados-do-athena---aws" class="section level2">
-<h2>Coletando os dados do Athena - AWS</h2>
+<div id="coletando-os-dados-do-athena---aws" class="section level3">
+<h3>Coletando os dados do Athena - AWS</h3>
 <pre class="r"><code>### Athena - AWS
 
 ## ##### Usuário e senha do Athena AWS
@@ -513,6 +526,1028 @@ df &lt;- data.frame(df)
 dim(df)
 names(df)</code></pre>
 </div>
+</div>
+<div id="pré-processamento-dos-dados" class="section level1">
+<h1>Pré-processamento dos dados</h1>
+<div id="carregando-os-dados---dados-de-crédito" class="section level3">
+<h3>Carregando os dados - Dados de crédito</h3>
+<pre class="r"><code>library(scorecard)
+library(tidyverse)
+
+data(&#39;germancredit&#39;)
+germancredit$ID &lt;- 1:dim(germancredit)[1]
+head(germancredit[,c(2,5,11,20:22)], n = 5)</code></pre>
+<pre><code>  duration.in.month credit.amount present.residence.since foreign.worker
+1                 6          1169                       4            yes
+2                48          5951                       2            yes
+3                12          2096                       3            yes
+4                42          7882                       4            yes
+5                24          4870                       4            yes
+  creditability ID
+1          good  1
+2           bad  2
+3          good  3
+4          good  4
+5           bad  5</code></pre>
+</div>
+<div id="carregando-os-dados---dados-de-hospital" class="section level3">
+<h3>Carregando os dados - Dados de hospital</h3>
+<pre class="r"><code>url &lt;- &#39;https://felipebarletta.github.io/DAEST/hospital.csv&#39;
+dados &lt;- read.csv(url,
+                  h = TRUE,
+                  sep = &#39;\t&#39;)</code></pre>
+</div>
+<div id="gráfico-idade-vs-desfecho" class="section level3">
+<h3>Gráfico idade vs desfecho</h3>
+<pre class="r"><code>library(ggplot2)
+ggplot(dados, aes(idade, fill = alta.motivo, colour = alta.motivo)) +
+    geom_density(alpha= 0.1, fill = &#39;white&#39;) + 
+  xlab(&#39;Idade em anos&#39;) + 
+  ylab(&#39;Densidade&#39;) +
+  theme_tq()</code></pre>
+<p><img src="scripts_files/figure-html/GraphAge-1.png" width="672" /></p>
+</div>
+<div id="criando-uma-nova-característica---faixa-etária" class="section level3">
+<h3>Criando uma nova característica - faixa etária</h3>
+<pre class="r"><code>dados$faixa_etaria &lt;- ifelse(dados$idade &gt; 55, 
+                             &quot;&gt;55 anos&quot;,
+                             &quot;&lt;=55 anos&quot;)</code></pre>
+</div>
+<div id="gráfico-com-a-nova-característica" class="section level3">
+<h3>Gráfico com a nova característica</h3>
+<pre class="r"><code>ggplot(dados, 
+       aes(y = factor(alta.motivo), 
+           x = idade, 
+           color = faixa_etaria)) +
+  geom_jitter(alpha = 0.7,
+              size = 1.5) + 
+  labs(x = &quot;Idade em anos&quot;,
+       y = &quot;&quot;) +
+  theme_tq()</code></pre>
+<p><img src="scripts_files/figure-html/graphFaixa-1.png" width="64%" /></p>
+</div>
+<div id="tabela-de-frequência---alta-vs-faixa-etária" class="section level3">
+<h3>Tabela de frequência - alta vs faixa etária</h3>
+<pre class="r"><code>table(dados$alta.motivo,dados$faixa_etaria)</code></pre>
+<pre><code>           
+            &lt;=55 anos &gt;55 anos
+  Melhorado      2830     1742
+  Obito           101      328</code></pre>
+</div>
+<div id="gráfico-temperatura-do-paciente-vs-desfecho" class="section level3">
+<h3>Gráfico Temperatura do paciente vs desfecho</h3>
+<pre class="r"><code>ggplot(dados, 
+       aes(y = factor(alta.motivo), 
+           x = temperatura, 
+           color = alta.motivo)) +
+  geom_jitter(alpha = 0.7,
+              size = 1.5) + 
+  labs(x = &quot;Temperatura em graus Celsius&quot;,
+       y = &quot;&quot;) +
+  theme_tq()</code></pre>
+<p><img src="scripts_files/figure-html/tempGraph-1.png" width="64%" /></p>
+</div>
+<div id="filtrando-out-lier---obtendo-uma-nova-amostra" class="section level3">
+<h3>Filtrando <strong>out-lier</strong> - Obtendo uma nova amostra</h3>
+<pre class="r"><code>dados2 &lt;- dados %&gt;%
+  filter(temperatura &gt; 0)
+
+ggplot(dados2, 
+       aes(y = factor(alta.motivo), 
+           x = temperatura, 
+           color = alta.motivo)) +
+  geom_jitter(alpha = 0.7,
+              size = 1.5) + 
+  labs(x = &quot;Temperatura em graus Celsius&quot;,
+       y = &quot;&quot;) +
+  theme_tq()</code></pre>
+<p><img src="scripts_files/figure-html/newSample-1.png" width="64%" /></p>
+</div>
+<div id="dados---hospital2" class="section level3">
+<h3>Dados - hospital2</h3>
+<pre class="r"><code>## Carregando os dados
+load(&#39;dados3.RData&#39;)
+
+## Formatando a data
+dados3$data &lt;- as.Date(dados3$date, 
+                       format = &quot;%Y-%m-%d&quot;,
+                       origin=&quot;2016-01-01&quot;)
+
+## Filtrando apenas classes óbito(1)
+dados4 &lt;- dados3 %&gt;%
+  filter(alta.motivo == 1)</code></pre>
+</div>
+<div id="resumindo-as-quantidades-de-de-óbito-por-dia" class="section level3">
+<h3>Resumindo as quantidades de de óbito por dia</h3>
+<pre class="r"><code>df &lt;- data.frame(table(dados4$data))
+
+colnames(df) &lt;- c(&#39;Dia&#39;,&#39;Quantidade&#39;)
+df$Dia &lt;- as.Date(df$Dia,
+                     format = &quot;%Y-%m-%d&quot;,
+                     origin=&quot;2016-01-01&quot;)
+
+head(df)</code></pre>
+<pre><code>         Dia Quantidade
+1 2014-01-06          3
+2 2014-01-07          7
+3 2014-01-08         11
+4 2014-01-09          5
+5 2014-01-10          8
+6 2014-01-11          9</code></pre>
+</div>
+<div id="gráfico-temporal-de-óbitos-diários" class="section level3">
+<h3>Gráfico temporal de óbitos diários</h3>
+<pre class="r"><code>library(ggplot2)
+library(cowplot)
+library(timetk)
+library(tidyquant)
+library(tibbletime)
+
+# Axis limits c(min, max)
+min &lt;- min(df$Dia)
+max &lt;- max(df$Dia)
+seg &lt;-as.Date(min+480)
+
+df &lt;- as_tbl_time(df,index = Dia)
+#### zoom
+v3 &lt;- df %&gt;%
+      ggplot(aes(x=Dia, y=Quantidade)) +
+      geom_line(color = palette_light()[[1]], alpha = 0.5, size=1) +
+      geom_point(color = palette_light()[[1]]) +
+      geom_smooth(method = &quot;loess&quot;, span = 0.2, se = TRUE, colour=&#39;darkorange&#39;) +
+      theme_tq() +
+      labs(title = &quot;&quot;,
+        caption = &quot;&quot;)  + xlab(&quot;Dias&quot;) + ylab(&quot;Quantidade de Óbitos&quot;) 
+   
+v3</code></pre>
+<p><img src="scripts_files/figure-html/Graphts1-1.png" width="672" /></p>
+</div>
+<div id="selecionando-uma-amostra-para-visualização-melhor" class="section level3">
+<h3>Selecionando uma amostra para visualização melhor</h3>
+<pre class="r"><code>#### zoom
+v4 &lt;- df %&gt;%
+      filter_time(&quot;2017-01-01&quot; ~ &quot;2018-12-31&quot;) %&gt;%
+      ggplot(aes(x=Dia, y=Quantidade)) +
+      geom_line(color = palette_light()[[1]], alpha = 0.5, size=1) +
+      geom_point(color = palette_light()[[1]]) +
+      geom_smooth(method = &quot;loess&quot;, span = 0.2, se = TRUE, colour=&#39;darkorange&#39;) +
+      theme_tq() +
+      labs(title = &quot;01/01/2017 à 31/12/2018&quot;,
+        caption = &quot;&quot;)  + 
+   xlab(&quot;Dias&quot;) + 
+   ylab(&quot;Quantidade de Óbitos&quot;) 
+   
+v4</code></pre>
+<p><img src="scripts_files/figure-html/Graphts2-1.png" width="672" /></p>
+</div>
+<div id="crindo-uma-característica-nova---dias-da-semana" class="section level3">
+<h3>Crindo uma característica nova - Dias da semana</h3>
+<pre class="r"><code>df$w &lt;- weekdays(df$Dia)</code></pre>
+</div>
+<div id="selecionando-pacientes-com-alta" class="section level3">
+<h3>Selecionando pacientes com alta</h3>
+<pre class="r"><code>dados4 &lt;- dados3 %&gt;%
+  filter(alta.motivo == 0)
+
+df &lt;- data.frame(table(dados4$data))
+
+colnames(df) &lt;- c(&#39;Dia&#39;,&#39;Quantidade&#39;)
+df$Dia &lt;- as.Date(df$Dia,
+                     format = &quot;%Y-%m-%d&quot;,
+                     origin=&quot;2016-01-01&quot;)
+
+# Axis limits c(min, max)
+min &lt;- min(df$Dia)
+max &lt;- max(df$Dia)
+seg &lt;-as.Date(min+480)
+
+df &lt;- as_tbl_time(df,index = Dia)
+#### zoom
+v3 &lt;- df %&gt;%
+    filter_time(&quot;2017-01-01&quot; ~ &quot;2018-12-31&quot;) %&gt;%
+      ggplot(aes(x=Dia, y=Quantidade)) +
+      geom_line(color = palette_light()[[1]], alpha = 0.5, size=1) +
+      geom_point(color = palette_light()[[1]]) +
+      geom_smooth(method = &quot;loess&quot;, span = 0.2, se = TRUE, colour=&#39;darkorange&#39;) +
+      theme_tq() +
+      labs(title = &quot;01/01/2017 à 31/12/2018&quot;,
+        caption = &quot;&quot;)  + 
+      xlab(&quot;Dias&quot;) + 
+      ylab(&quot;Quantidade de Alta&quot;) 
+   
+v3</code></pre>
+<p><img src="scripts_files/figure-html/alta-1.png" width="672" /></p>
+</div>
+<div id="mediana-da-quantidade-de-alta-vs-dia-da-semana" class="section level3">
+<h3>Mediana da quantidade de alta vs dia da semana</h3>
+<pre class="r"><code>df$w &lt;- weekdays(df$Dia)
+tapply(df$Quantidade,df$w, median)</code></pre>
+<pre><code>domingo  quarta  quinta  sábado segunda   sexta   terça 
+     61     144     148     107      97     174     135 </code></pre>
+</div>
+<div id="missing-values-valores-faltantes" class="section level3">
+<h3>Missing values (valores faltantes)</h3>
+<pre class="r"><code>library(DataExplorer)
+ 
+plot_missing(dados[,3:8]) </code></pre>
+<p><img src="scripts_files/figure-html/missing-1.png" width="672" /></p>
+</div>
+<div id="criando-uma-nova-caractrística---variável-dicotômica-utienfermaria" class="section level3">
+<h3>Criando uma nova caractrística - variável dicotômica UTI/Enfermaria</h3>
+<pre class="r"><code>table(dados$setor)</code></pre>
+<pre><code>
+                 1AP1       1AP2 1AP2 - 126       2AP1       2AP2       3AP1 
+         1         59        347         19         51        985        607 
+      3AP2       3AP3 3AP3 - EPI       4AP1       4AP2    SEMI-CO        UIP 
+       298        677        147       1034        475         25          2 
+      UTIC       UTIG       UTIP 
+        66        174         34 </code></pre>
+<pre class="r"><code>dados$setor2 &lt;- ifelse(dados$setor %in% c(&#39;UTIC&#39;,
+                                          &#39;UTIG&#39;,
+                                          &#39;UTIP&#39;),
+                       &#39;UTI&#39;,
+                       &#39;Enfermaria&#39;) 
+table(dados$setor2)</code></pre>
+<pre><code>
+Enfermaria        UTI 
+      4727        274 </code></pre>
+<pre class="r"><code>dados2 &lt;- dados %&gt;%
+  filter(temperatura &gt; 0)
+
+
+uti1 &lt;- ggplot(dados2, aes(y = factor(setor2), 
+                           x = temperatura, 
+                           color = setor2)) +
+         geom_jitter(alpha = 0.7, size = 1.5) + 
+         labs(x = &quot;Temperatura em graus Celsius&quot;, y = &quot;&quot;) +
+         theme_tq()
+
+
+idade2 &lt;- dados2 %&gt;%
+    filter(!is.na(sat_o2))
+
+uti2 &lt;- ggplot(idade2, aes(y = factor(setor2), x = temperatura, color = setor2)) +
+        geom_jitter(alpha = 0.7,size = 1.5) +
+        labs(x = &quot;Temperatura em graus Celsius&quot;, y = &quot;&quot;) +
+        theme_tq()
+
+cowplot::plot_grid(uti1,
+                   uti2,
+                   labels = c(&#39;Com missing - sat_o2&#39;,
+                              &#39;Sem missing - sat-O2&#39;))</code></pre>
+<p><img src="scripts_files/figure-html/mis1-1.png" width="672" /></p>
+</div>
+<div id="distribuição-do-desfecho-na-uti" class="section level3">
+<h3>Distribuição do desfecho na <strong>UTI</strong></h3>
+<div id="com-missing---sat_o2" class="section level4">
+<h4>Com missing - sat_o2</h4>
+<pre class="r"><code>round(prop.table(table(dados$alta.motivo[dados$setor2 == &#39;UTI&#39;])),4)</code></pre>
+<pre><code>
+Melhorado     Obito 
+   0.0438    0.9562 </code></pre>
+</div>
+<div id="sem-missing---sat_o2" class="section level4">
+<h4>Sem missing - sat_o2</h4>
+<pre class="r"><code>round(prop.table(table(idade2$alta.motivo[idade2$setor2 == &#39;UTI&#39;])),4)</code></pre>
+<pre><code>
+Melhorado     Obito 
+   0.0412    0.9588 </code></pre>
+</div>
+</div>
+<div id="exemplo---dados-faltantes" class="section level3">
+<h3>Exemplo - dados faltantes</h3>
+<pre class="r"><code>p1 &lt;- ggplot(dados, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+      geom_density(alpha= 0.1, fill = &#39;white&#39;) +
+      xlab(&#39;Temperatura em graus Celsius&#39;) +
+      ylab(&#39;Densidade&#39;) +
+      theme_tq()
+
+idade2 &lt;- dados %&gt;%
+    filter(!is.na(sat_o2))
+
+p2 &lt;- ggplot(idade2, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+      geom_density(alpha= 0.1, fill = &#39;white&#39;) +
+      xlab(&#39;Temperatura em graus Celsius&#39;) +
+      ylab(&#39;Densidade&#39;) +
+      theme_tq()
+
+cowplot::plot_grid(p1,
+                   p2,
+                   labels = c(&#39;Com missing&#39;,
+                              &#39;Sem missing&#39;))</code></pre>
+<p><img src="scripts_files/figure-html/missigTemp-1.png" width="100%" /></p>
+</div>
+</div>
+<div id="imputação" class="section level1">
+<h1>Imputação</h1>
+<ul>
+<li>Algoritmo <strong>KNN</strong> <em>(k-nearest neighbors)</em></li>
+</ul>
+<ol style="list-style-type: decimal">
+<li><p>Recebe um dado não classificado;</p></li>
+<li><p>Define o tamanho da vizinhança (K);</p></li>
+<li><p>Mede a distância (Euclidiana) do novo; dado com todos os outros dados que já estão classificados;</p></li>
+<li><p>Obtém a menor ou menores distâncias;</p></li>
+<li><p>Verifica o valor de cada da um dos dados que tiveram a menor distância;</p></li>
+<li><p>Toma como resultado o valor que mais apareceu dentre os dados que tiveram as menores distâncias.</p></li>
+</ol>
+<pre class="r"><code>library(caret)
+missingdata &lt;- preProcess(dados, method=c(&#39;scale&#39;,&#39;knnImpute&#39;))
+
+
+library(RANN)  # library for knnInpute
+NewData &lt;- predict(missingdata, 
+                     newdata = dados)
+#anyNA(NewData)
+
+p1 &lt;- ggplot(dados, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+    geom_density(alpha= 0.1, fill = &#39;white&#39;) +
+    xlab(&#39;Temperatura em graus Celsius&#39;) +
+    ylab(&#39;Densidade&#39;) +
+    theme_tq()
+
+
+p2 &lt;- ggplot(NewData, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+    geom_density(alpha= 0.1, fill = &#39;white&#39;) +
+    xlab(&#39;Temperatura em graus Celsius&#39;) +
+    ylab(&#39;Densidade&#39;) +
+    theme_tq()
+
+cowplot::plot_grid(p1,
+                   p2,
+                   labels = c(&#39;Com missing&#39;,
+                              &#39;Sem missing&#39;))</code></pre>
+<p><img src="scripts_files/figure-html/imp1-1.png" width="672" /></p>
+<div id="dados-desbalanceados" class="section level3">
+<h3>Dados desbalanceados</h3>
+<pre class="r"><code>ggplot(germancredit, aes(creditability)) + 
+  geom_bar() +
+   theme_tq()</code></pre>
+<p><img src="scripts_files/figure-html/credito-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(dados, aes(alta.motivo)) + 
+  geom_bar()+
+   theme_tq()</code></pre>
+<p><img src="scripts_files/figure-html/saude-1.png" width="672" /></p>
+</div>
+</div>
+<div id="correlação" class="section level1">
+<h1>Correlação</h1>
+<ul>
+<li>Exemplos de correlação</li>
+</ul>
+<pre class="r"><code># Diagrama de dispersão
+# Plotando todos no mesmo gráfico
+par(mfrow=c(2,3))
+# Correlação perfeita positiva
+x&lt;-seq(-100, 100)
+y1&lt;-x*2.53
+plot(x, y1, main = &quot;Correlação perfeita positiva&quot;,ylab = &quot;y&quot;,col=&quot;blue&quot;)
+
+# Correlação perfeita negativa
+x&lt;-seq(-100, 100)
+y2&lt;- -x*2.53
+plot(x, y2, main = &quot;Correlação perfeita negativa&quot;,ylab = &quot;y&quot;,col=&quot;blue&quot;)
+
+# Alta correlação positiva
+y3&lt;-rnorm(y1,y1,20)
+plot(x,y3,main=&quot;Alta correlação positiva&quot;,ylab = &quot;y&quot;,col=&quot;blue&quot;)
+
+# Alta correlação
+y4&lt;-rnorm(y1,(-1)*y1,20)
+plot(x,y4,main=&quot;Alta correlação negativa&quot;,ylab = &quot;y&quot;,col=&quot;blue&quot;)
+
+# Baixa correlação positiva
+y5&lt;-rnorm(y1,y1,500)
+plot(x,y5,main=&quot;Baixa correlação&quot;,ylab = &quot;y&quot;,col=&quot;blue&quot;)
+
+# Correlação não linear
+y6&lt;- rnorm(x, x^2, 1000)
+plot(x,y6,main=&quot;Correlação não linear&quot;,ylab = &quot;y&quot;,col=&quot;blue&quot;)</code></pre>
+<p><img src="scripts_files/figure-html/corr-1.png" width="672" /></p>
+<div id="matriz-de-correlação" class="section level4">
+<h4>Matriz de correlação</h4>
+<pre class="r"><code>x &lt;- dados[,c(1,3:8)]
+
+#corrplot::corrplot(cor(na.omit(x)), method = &#39;number&#39;,type=&#39;upper&#39;)
+
+cor.mtest &lt;- function(mat, ...) {
+    mat &lt;- as.matrix(mat)
+    n &lt;- ncol(mat)
+    p.mat&lt;- matrix(NA, n, n)
+    diag(p.mat) &lt;- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp &lt;- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] &lt;- p.mat[j, i] &lt;- tmp$p.value
+        }
+    }
+  colnames(p.mat) &lt;- rownames(p.mat) &lt;- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat &lt;- cor.mtest(na.omit(x))
+#head(p.mat[, 1:5])
+
+col &lt;- colorRampPalette(c(&quot;#BB4444&quot;, &quot;#EE9988&quot;, &quot;#FFFFFF&quot;, &quot;#77AADD&quot;, &quot;#4477AA&quot;))
+corrplot::corrplot(cor(na.omit(x)), method=&quot;color&quot;, col=col(200),  
+         type=&quot;upper&quot;, order=&quot;hclust&quot;, 
+         addCoef.col = &quot;black&quot;, # Add coefficient of correlation
+         tl.col=&quot;black&quot;, tl.srt=45, #Text label color and rotation
+         # Combine with significance
+         p.mat = p.mat, sig.level = 0.05, insig = &quot;blank&quot;, 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+         )</code></pre>
+<p><img src="scripts_files/figure-html/matrixCorr-1.png" width="672" /></p>
+</div>
+</div>
+<div id="análise-de-componentes-principais" class="section level1">
+<h1>Análise de Componentes principais</h1>
+<ul>
+<li><p>Suponha um vetor de características <span class="math inline">\(X_1, X_2,...,X_p\)</span></p>
+<p><span class="math display">\[Z_k = \phi_{1k}X_1 + \phi_{2k}X_2 +...+ \phi_{pk}X_p\]</span></p></li>
+<li><p>A variância total dos dados é definida como:</p>
+<p><span class="math display">\[\displaystyle{\sum_{j=1}^p}Var(Z_j) = \lambda_1+\lambda_2+...+\lambda_p\]</span></p></li>
+<li><p>Assim, a proporção da variância explicada pela j-ésima componente principal é dada por:</p>
+<p><span class="math display">\[ \displaystyle{\frac{\lambda_j}{\lambda_1+\lambda_2+...+\lambda_j}}\]</span></p></li>
+<li><p>Os dados usados nesse exemplo podem ser encontrados em <a href="https://github.com/laura-health/cbms2020">https://github.com/laura-health/cbms2020</a></p></li>
+</ul>
+<pre class="r"><code>dados &lt;- read.csv(&#39;heg_sample_data.csv&#39;,
+                  header = TRUE,
+                  sep = &#39;,&#39;)
+
+dim(dados)</code></pre>
+<pre><code>[1] 13652    73</code></pre>
+<pre class="r"><code>head(dados[,1:6])</code></pre>
+<pre><code>  X days_from_entrance        age document.sexo UTI
+1 0          0.4811600 -0.4303752             1   0
+2 1          1.8376946  0.2301751             1   0
+3 2          0.2268098 -0.7193659             1   0
+4 3         -0.3666741  1.7164132             1   0
+5 4         -0.3666741  1.2622849             0   0
+6 5         -0.2818907 -0.8432191             1   0
+  delta_collect_timestamp_t.t1
+1                    0.1814797
+2                    1.2013381
+3                    2.0494973
+4                    1.0380565
+5                    0.8794738
+6                    1.0424826</code></pre>
+<pre class="r"><code>library(dplyr)
+
+dados2  &lt;- dados %&gt;%
+    select(-c(&#39;X&#39;,
+              &#39;document.sexo&#39;,
+              &#39;UTI&#39;,
+              &#39;outcome&#39;)
+           )
+
+
+#### Matriz de covariância
+S &lt;- round(cov(dados2),2)
+S[1:3,1:3]</code></pre>
+<pre><code>                             days_from_entrance   age
+days_from_entrance                         2.07 -0.01
+age                                       -0.01  0.59
+delta_collect_timestamp_t.t1               0.64  0.06
+                             delta_collect_timestamp_t.t1
+days_from_entrance                                   0.64
+age                                                  0.06
+delta_collect_timestamp_t.t1                         4.29</code></pre>
+<pre class="r"><code>#### Matriz de correlação
+R &lt;- round(cor(dados2),2)
+R[1:5,1:5]</code></pre>
+<pre><code>                              days_from_entrance   age
+days_from_entrance                          1.00 -0.01
+age                                        -0.01  1.00
+delta_collect_timestamp_t.t1                0.22  0.04
+delta_collect_timestamp_t1.t2               0.29  0.04
+delta_collect_timestamp_t2.t3               0.30  0.04
+                              delta_collect_timestamp_t.t1
+days_from_entrance                                    0.22
+age                                                   0.04
+delta_collect_timestamp_t.t1                          1.00
+delta_collect_timestamp_t1.t2                         0.40
+delta_collect_timestamp_t2.t3                         0.38
+                              delta_collect_timestamp_t1.t2
+days_from_entrance                                     0.29
+age                                                    0.04
+delta_collect_timestamp_t.t1                           0.40
+delta_collect_timestamp_t1.t2                          1.00
+delta_collect_timestamp_t2.t3                          0.41
+                              delta_collect_timestamp_t2.t3
+days_from_entrance                                     0.30
+age                                                    0.04
+delta_collect_timestamp_t.t1                           0.38
+delta_collect_timestamp_t1.t2                          0.41
+delta_collect_timestamp_t2.t3                          1.00</code></pre>
+<pre class="r"><code>### Gráfico da matriz de correlação
+cor.mtest &lt;- function(mat, ...) {
+    mat &lt;- as.matrix(mat)
+    n &lt;- ncol(mat)
+    p.mat&lt;- matrix(NA, n, n)
+    diag(p.mat) &lt;- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp &lt;- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] &lt;- p.mat[j, i] &lt;- tmp$p.value
+        }
+    }
+  colnames(p.mat) &lt;- rownames(p.mat) &lt;- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat &lt;- cor.mtest(dados2)
+#head(p.mat[, 1:5])
+
+col &lt;- colorRampPalette(c(&quot;#BB4444&quot;, &quot;#EE9988&quot;, &quot;#FFFFFF&quot;, &quot;#77AADD&quot;, &quot;#4477AA&quot;))
+corrplot::corrplot(cor(dados2), method=&quot;color&quot;, col=col(200),
+                   type=&quot;upper&quot;, order=&quot;hclust&quot;,
+                   number.cex = .07,
+                   tl.cex = 0.4,
+         addCoef.col = &quot;black&quot;, # Add coefficient of correlation
+         tl.col=&quot;black&quot;, tl.srt=45, #Text label color and rotation
+         # Combine with significance
+         p.mat = p.mat, sig.level = 0.05, insig = &quot;blank&quot;,
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE
+         )</code></pre>
+<p><img src="scripts_files/figure-html/pca-1.png" width="672" /></p>
+<pre class="r"><code>### Padronizando
+z &lt;- scale(dados2)
+R &lt;- round(cor(z),2)
+
+# Autovalores e autovetores
+autovalor.autovetor&lt;- eigen(R)
+head(autovalor.autovetor$vectors)</code></pre>
+<pre><code>            [,1]         [,2]        [,3]        [,4]       [,5]       [,6]
+[1,] -0.05105621 -0.042076983 0.000545874 -0.08139705 0.06403420  0.1779084
+[2,] -0.10230770 -0.005433656 0.116202576 -0.13622080 0.14918267 -0.1259927
+[3,] -0.04036232 -0.046036164 0.026911695 -0.12675203 0.07873310  0.2692943
+[4,] -0.04910357 -0.084797322 0.043797121 -0.11257048 0.07048544  0.2930954
+[5,] -0.04517987 -0.051574039 0.020162080 -0.11931925 0.08401662  0.2697198
+[6,] -0.04635546 -0.058275827 0.023960875 -0.11710992 0.07896985  0.2693013
+             [,7]        [,8]       [,9]       [,10]      [,11]       [,12]
+[1,]  0.008047805 -0.03676643 0.03411967 -0.04978137 0.03443423 -0.14126563
+[2,] -0.018176700 -0.02513620 0.00144622  0.00736905 0.01008844 -0.03348035
+[3,]  0.021120258 -0.04178843 0.03223004 -0.02931552 0.04956382 -0.19485995
+[4,]  0.011118652 -0.03373166 0.03351479 -0.05739411 0.06713068 -0.21665580
+[5,]  0.009894598 -0.04305440 0.02370909 -0.05891657 0.05614342 -0.19600466
+[6,]  0.018872945 -0.03292394 0.01705792 -0.05933064 0.05027194 -0.21405115
+           [,13]       [,14]       [,15]       [,16]       [,17]       [,18]
+[1,] 0.020233242 -0.05267993 -0.06525931  0.06940890 0.172121070  0.16662107
+[2,] 0.005742711  0.01158876  0.01178394 -0.01275809 0.006710519 -0.03951602
+[3,] 0.016023962 -0.05039871 -0.05849199  0.03489621 0.128689046  0.09813076
+[4,] 0.023378622 -0.05394288 -0.03936825  0.06249738 0.141525077  0.11328742
+[5,] 0.027106044 -0.05012910 -0.07004417  0.06160743 0.167737849  0.13285797
+[6,] 0.025298473 -0.07033453 -0.05125297  0.03362663 0.151877503  0.12275200
+           [,19]      [,20]       [,21]        [,22]        [,23]       [,24]
+[1,] -0.08349526 0.04039622 0.001786102  0.047333856 -0.059671846 -0.02264697
+[2,]  0.03929902 0.01087106 0.013971541 -0.001406015 -0.091480465 -0.08811694
+[3,] -0.04679158 0.03806451 0.033123494 -0.016115215 -0.009715854 -0.06859228
+[4,] -0.05293511 0.06779353 0.028598206 -0.031696038 -0.017457999 -0.08465729
+[5,] -0.06015472 0.07344514 0.025309974  0.012661739 -0.010613236 -0.03498874
+[6,] -0.05627007 0.04461279 0.037912318 -0.005623846 -0.016429150 -0.04515987
+            [,25]        [,26]        [,27]        [,28]        [,29]
+[1,]  0.017390669  0.016994844  0.004785372  0.075146223  0.148390355
+[2,] -0.021797075  0.008269755 -0.114138136 -0.006262522  0.039962994
+[3,] -0.049370238 -0.009815200  0.023600912 -0.009518550  0.062969605
+[4,]  0.009882757 -0.014232842 -0.054079364 -0.028940142 -0.005250541
+[5,] -0.046545398  0.015483795  0.021285214  0.051377165  0.059500632
+[6,] -0.043286775 -0.005233509  0.008581852  0.036051685  0.064027122
+           [,30]       [,31]       [,32]       [,33]         [,34]        [,35]
+[1,]  0.12809102  0.61294394 -0.11602332  0.56588032 -0.1418137216 -0.005647748
+[2,] -0.28943777 -0.52609600  0.15340326  0.53260093 -0.3343503519 -0.011368933
+[3,] -0.06487151 -0.23162310  0.05632851 -0.30163623  0.0394647826 -0.193122994
+[4,] -0.02302825 -0.07512682  0.01187665 -0.08018169  0.0059774289 -0.074263276
+[5,] -0.06168447 -0.02737890  0.03908695  0.02849697  0.0885033184  0.012936706
+[6,]  0.02568664 -0.14408575  0.03364349 -0.19619856  0.0001824666  0.250881069
+           [,36]       [,37]       [,38]       [,39]       [,40]         [,41]
+[1,] -0.06364399 -0.23233547 -0.08230447 -0.04386169 -0.03308570 -0.0007913217
+[2,]  0.01515075  0.01180140 -0.06074033 -0.19936216 -0.22118273 -0.0934756673
+[3,] -0.57708053 -0.50791510 -0.13430739 -0.02658979 -0.06104257  0.0254810566
+[4,]  0.28836785 -0.01842589  0.78812657 -0.18197741  0.05872339  0.0005266016
+[5,] -0.31918155  0.78582199 -0.10505513  0.16486938  0.04220495 -0.0050359856
+[6,]  0.63088989 -0.10630924 -0.48984143  0.09308284 -0.01243191 -0.0133159215
+             [,42]         [,43]         [,44]        [,45]         [,46]
+[1,]  0.0027251960  3.804461e-03  0.0007117369  0.001705073  0.0034465214
+[2,] -0.0002540131  2.976229e-03  0.0064203480 -0.001241409  0.0063934151
+[3,] -0.0075679391 -7.807351e-05  0.0001710506 -0.003243636  0.0058458102
+[4,]  0.0661747302  1.059764e-03 -0.0139649464 -0.003869914 -0.0021591938
+[5,]  0.0191277156 -3.445338e-03  0.0031492544  0.007691371  0.0005985063
+[6,] -0.0288320037  3.132167e-03  0.0041189660  0.009992614 -0.0042213894
+            [,47]         [,48]         [,49]         [,50]        [,51]
+[1,] -0.003833538  0.0002868931 -0.0019813801  0.0068382471 -0.004636065
+[2,] -0.002919480  0.0010747855  0.0135762480  0.0031703735 -0.004022353
+[3,] -0.006451819  0.0092318536  0.0083766717  0.0005160273  0.001886179
+[4,] -0.013476018 -0.0042416912  0.0124247812  0.0078653908  0.005474089
+[5,] -0.003001707  0.0033011181 -0.0066834470 -0.0068408684 -0.003417805
+[6,]  0.010305505  0.0072840513  0.0006255288  0.0016626801  0.002247778
+             [,52]         [,53]         [,54]        [,55]         [,56]
+[1,]  0.0030724733  0.0034170423  0.0003760415  0.007062693 -0.0006974262
+[2,]  0.0019258375  0.0072508636 -0.0012003449  0.004693160  0.0024265062
+[3,]  0.0003924683  0.0028019161 -0.0085138533  0.001382613 -0.0014645597
+[4,] -0.0075932816 -0.0002124565 -0.0021341181 -0.007680362  0.0083905576
+[5,]  0.0041744018  0.0131227786  0.0042997699  0.003613776  0.0017698720
+[6,] -0.0079085672  0.0009806856 -0.0038249668 -0.012388422 -0.0006483712
+             [,57]        [,58]         [,59]        [,60]         [,61]
+[1,]  2.773374e-03  0.004387407 -0.0029744710 -0.003461122  0.0012334997
+[2,] -2.003468e-03  0.006764407 -0.0003169845 -0.002074786  0.0003547544
+[3,]  5.405684e-03  0.002262689 -0.0016831157 -0.004815113 -0.0100147494
+[4,]  8.242377e-03 -0.002724276 -0.0043488970  0.005125377 -0.0145410683
+[5,]  8.421986e-05 -0.002810289 -0.0022016789 -0.001589977 -0.0040300706
+[6,]  3.562703e-04  0.007752641 -0.0055874396 -0.007186238  0.0025252221
+             [,62]         [,63]        [,64]        [,65]         [,66]
+[1,]  0.0021040995 -0.0033139549  0.004545586  0.002275874 -0.0081725017
+[2,]  0.0065826805 -0.0006611581 -0.008869717 -0.007485147  0.0034739022
+[3,] -0.0011169335  0.0032457616 -0.004627589  0.004063673  0.0012733586
+[4,] -0.0057647843  0.0024641309  0.003748269 -0.001769666  0.0003225127
+[5,] -0.0000107237  0.0006031211 -0.006069581  0.003890056  0.0122310218
+[6,]  0.0054992004  0.0050169739  0.006903840 -0.002233937 -0.0002194624
+            [,67]         [,68]        [,69]
+[1,] -0.007263713 -0.0004433214  0.005652709
+[2,] -0.003464707 -0.0024813837 -0.002530166
+[3,]  0.007986709  0.0013410461  0.001879457
+[4,]  0.001268314  0.0103984215 -0.004760680
+[5,] -0.002659912 -0.0029874229 -0.003134498
+[6,]  0.006696754  0.0005707292 -0.009583839</code></pre>
+<pre class="r"><code>head(autovalor.autovetor$values)</code></pre>
+<pre><code>[1] 5.430517 4.289584 3.966827 3.198286 3.133321 3.027491</code></pre>
+<pre class="r"><code># Recebendo percentual das variâncias e porcentagem acumulativa
+var.porc  &lt;-  autovalor.autovetor$values / sum(autovalor.autovetor$values)*100
+head(var.porc)</code></pre>
+<pre><code>[1] 7.870314 6.216789 5.749025 4.635197 4.541045 4.387668</code></pre>
+<pre class="r"><code>var.acum  &lt;- cumsum(var.porc)
+head(var.acum)</code></pre>
+<pre><code>[1]  7.870314 14.087103 19.836128 24.471325 29.012370 33.400038</code></pre>
+<pre class="r"><code>porc.explic &lt;- round(data.frame(autovalores = autovalor.autovetor$values,
+                                var.porc = var.porc,
+                                var.acum = var.acum), 3)
+
+head(porc.explic,28)</code></pre>
+<pre><code>   autovalores var.porc var.acum
+1        5.431    7.870    7.870
+2        4.290    6.217   14.087
+3        3.967    5.749   19.836
+4        3.198    4.635   24.471
+5        3.133    4.541   29.012
+6        3.027    4.388   33.400
+7        2.724    3.949   37.349
+8        2.714    3.933   41.282
+9        2.278    3.301   44.583
+10       2.132    3.090   47.673
+11       2.102    3.046   50.719
+12       1.948    2.824   53.543
+13       1.848    2.678   56.221
+14       1.800    2.609   58.830
+15       1.754    2.543   61.372
+16       1.710    2.479   63.851
+17       1.696    2.458   66.309
+18       1.647    2.387   68.696
+19       1.518    2.199   70.895
+20       1.482    2.148   73.043
+21       1.362    1.974   75.018
+22       1.298    1.881   76.899
+23       1.252    1.814   78.713
+24       1.223    1.773   80.486
+25       1.208    1.751   82.237
+26       1.174    1.701   83.938
+27       1.055    1.529   85.467
+28       1.050    1.521   86.988</code></pre>
+<pre class="r"><code>plot(porc.explic$autovalores,
+     type = &quot;b&quot;,
+     ylab = &quot;Valor Autovalores&quot;,
+     xlab = &quot;Número de autovalores&quot;,
+     axes = T)
+
+abline(h=1, col=2, lwd=2)</code></pre>
+<p><img src="scripts_files/figure-html/pca-2.png" width="672" /></p>
+<pre class="r"><code># Matriz e dos coeficientes das combinações lineares referentes às componentes principais Yk
+
+e &lt;- round(as.matrix(autovalor.autovetor$vector),3)
+head(e)</code></pre>
+<pre><code>       [,1]   [,2]  [,3]   [,4]  [,5]   [,6]   [,7]   [,8]  [,9]  [,10] [,11]
+[1,] -0.051 -0.042 0.001 -0.081 0.064  0.178  0.008 -0.037 0.034 -0.050 0.034
+[2,] -0.102 -0.005 0.116 -0.136 0.149 -0.126 -0.018 -0.025 0.001  0.007 0.010
+[3,] -0.040 -0.046 0.027 -0.127 0.079  0.269  0.021 -0.042 0.032 -0.029 0.050
+[4,] -0.049 -0.085 0.044 -0.113 0.070  0.293  0.011 -0.034 0.034 -0.057 0.067
+[5,] -0.045 -0.052 0.020 -0.119 0.084  0.270  0.010 -0.043 0.024 -0.059 0.056
+[6,] -0.046 -0.058 0.024 -0.117 0.079  0.269  0.019 -0.033 0.017 -0.059 0.050
+      [,12] [,13]  [,14]  [,15]  [,16] [,17]  [,18]  [,19] [,20] [,21]  [,22]
+[1,] -0.141 0.020 -0.053 -0.065  0.069 0.172  0.167 -0.083 0.040 0.002  0.047
+[2,] -0.033 0.006  0.012  0.012 -0.013 0.007 -0.040  0.039 0.011 0.014 -0.001
+[3,] -0.195 0.016 -0.050 -0.058  0.035 0.129  0.098 -0.047 0.038 0.033 -0.016
+[4,] -0.217 0.023 -0.054 -0.039  0.062 0.142  0.113 -0.053 0.068 0.029 -0.032
+[5,] -0.196 0.027 -0.050 -0.070  0.062 0.168  0.133 -0.060 0.073 0.025  0.013
+[6,] -0.214 0.025 -0.070 -0.051  0.034 0.152  0.123 -0.056 0.045 0.038 -0.006
+      [,23]  [,24]  [,25]  [,26]  [,27]  [,28]  [,29]  [,30]  [,31]  [,32]
+[1,] -0.060 -0.023  0.017  0.017  0.005  0.075  0.148  0.128  0.613 -0.116
+[2,] -0.091 -0.088 -0.022  0.008 -0.114 -0.006  0.040 -0.289 -0.526  0.153
+[3,] -0.010 -0.069 -0.049 -0.010  0.024 -0.010  0.063 -0.065 -0.232  0.056
+[4,] -0.017 -0.085  0.010 -0.014 -0.054 -0.029 -0.005 -0.023 -0.075  0.012
+[5,] -0.011 -0.035 -0.047  0.015  0.021  0.051  0.060 -0.062 -0.027  0.039
+[6,] -0.016 -0.045 -0.043 -0.005  0.009  0.036  0.064  0.026 -0.144  0.034
+      [,33]  [,34]  [,35]  [,36]  [,37]  [,38]  [,39]  [,40]  [,41]  [,42]
+[1,]  0.566 -0.142 -0.006 -0.064 -0.232 -0.082 -0.044 -0.033 -0.001  0.003
+[2,]  0.533 -0.334 -0.011  0.015  0.012 -0.061 -0.199 -0.221 -0.093  0.000
+[3,] -0.302  0.039 -0.193 -0.577 -0.508 -0.134 -0.027 -0.061  0.025 -0.008
+[4,] -0.080  0.006 -0.074  0.288 -0.018  0.788 -0.182  0.059  0.001  0.066
+[5,]  0.028  0.089  0.013 -0.319  0.786 -0.105  0.165  0.042 -0.005  0.019
+[6,] -0.196  0.000  0.251  0.631 -0.106 -0.490  0.093 -0.012 -0.013 -0.029
+      [,43]  [,44]  [,45]  [,46]  [,47]  [,48]  [,49]  [,50]  [,51]  [,52]
+[1,]  0.004  0.001  0.002  0.003 -0.004  0.000 -0.002  0.007 -0.005  0.003
+[2,]  0.003  0.006 -0.001  0.006 -0.003  0.001  0.014  0.003 -0.004  0.002
+[3,]  0.000  0.000 -0.003  0.006 -0.006  0.009  0.008  0.001  0.002  0.000
+[4,]  0.001 -0.014 -0.004 -0.002 -0.013 -0.004  0.012  0.008  0.005 -0.008
+[5,] -0.003  0.003  0.008  0.001 -0.003  0.003 -0.007 -0.007 -0.003  0.004
+[6,]  0.003  0.004  0.010 -0.004  0.010  0.007  0.001  0.002  0.002 -0.008
+     [,53]  [,54]  [,55]  [,56]  [,57]  [,58]  [,59]  [,60]  [,61]  [,62]
+[1,] 0.003  0.000  0.007 -0.001  0.003  0.004 -0.003 -0.003  0.001  0.002
+[2,] 0.007 -0.001  0.005  0.002 -0.002  0.007  0.000 -0.002  0.000  0.007
+[3,] 0.003 -0.009  0.001 -0.001  0.005  0.002 -0.002 -0.005 -0.010 -0.001
+[4,] 0.000 -0.002 -0.008  0.008  0.008 -0.003 -0.004  0.005 -0.015 -0.006
+[5,] 0.013  0.004  0.004  0.002  0.000 -0.003 -0.002 -0.002 -0.004  0.000
+[6,] 0.001 -0.004 -0.012 -0.001  0.000  0.008 -0.006 -0.007  0.003  0.005
+      [,63]  [,64]  [,65]  [,66]  [,67]  [,68]  [,69]
+[1,] -0.003  0.005  0.002 -0.008 -0.007  0.000  0.006
+[2,] -0.001 -0.009 -0.007  0.003 -0.003 -0.002 -0.003
+[3,]  0.003 -0.005  0.004  0.001  0.008  0.001  0.002
+[4,]  0.002  0.004 -0.002  0.000  0.001  0.010 -0.005
+[5,]  0.001 -0.006  0.004  0.012 -0.003 -0.003 -0.003
+[6,]  0.005  0.007 -0.002  0.000  0.007  0.001 -0.010</code></pre>
+<pre class="r"><code>e[c(1:3,28),c(1:3,28)]</code></pre>
+<pre><code>       [,1]   [,2]   [,3]   [,4]
+[1,] -0.051 -0.042  0.001  0.075
+[2,] -0.102 -0.005  0.116 -0.006
+[3,] -0.040 -0.046  0.027 -0.010
+[4,] -0.336  0.011 -0.051 -0.013</code></pre>
+<pre class="r"><code>## C1 = -0.051*z1  -0.102*z2 -0.04*z3 ...-0.336*z28
+V &lt;- round(diag(autovalor.autovetor$values),3)
+head(V)</code></pre>
+<pre><code>      [,1] [,2]  [,3]  [,4]  [,5]  [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+[1,] 5.431 0.00 0.000 0.000 0.000 0.000    0    0    0     0     0     0     0
+[2,] 0.000 4.29 0.000 0.000 0.000 0.000    0    0    0     0     0     0     0
+[3,] 0.000 0.00 3.967 0.000 0.000 0.000    0    0    0     0     0     0     0
+[4,] 0.000 0.00 0.000 3.198 0.000 0.000    0    0    0     0     0     0     0
+[5,] 0.000 0.00 0.000 0.000 3.133 0.000    0    0    0     0     0     0     0
+[6,] 0.000 0.00 0.000 0.000 0.000 3.027    0    0    0     0     0     0     0
+     [,14] [,15] [,16] [,17] [,18] [,19] [,20] [,21] [,22] [,23] [,24] [,25]
+[1,]     0     0     0     0     0     0     0     0     0     0     0     0
+[2,]     0     0     0     0     0     0     0     0     0     0     0     0
+[3,]     0     0     0     0     0     0     0     0     0     0     0     0
+[4,]     0     0     0     0     0     0     0     0     0     0     0     0
+[5,]     0     0     0     0     0     0     0     0     0     0     0     0
+[6,]     0     0     0     0     0     0     0     0     0     0     0     0
+     [,26] [,27] [,28] [,29] [,30] [,31] [,32] [,33] [,34] [,35] [,36] [,37]
+[1,]     0     0     0     0     0     0     0     0     0     0     0     0
+[2,]     0     0     0     0     0     0     0     0     0     0     0     0
+[3,]     0     0     0     0     0     0     0     0     0     0     0     0
+[4,]     0     0     0     0     0     0     0     0     0     0     0     0
+[5,]     0     0     0     0     0     0     0     0     0     0     0     0
+[6,]     0     0     0     0     0     0     0     0     0     0     0     0
+     [,38] [,39] [,40] [,41] [,42] [,43] [,44] [,45] [,46] [,47] [,48] [,49]
+[1,]     0     0     0     0     0     0     0     0     0     0     0     0
+[2,]     0     0     0     0     0     0     0     0     0     0     0     0
+[3,]     0     0     0     0     0     0     0     0     0     0     0     0
+[4,]     0     0     0     0     0     0     0     0     0     0     0     0
+[5,]     0     0     0     0     0     0     0     0     0     0     0     0
+[6,]     0     0     0     0     0     0     0     0     0     0     0     0
+     [,50] [,51] [,52] [,53] [,54] [,55] [,56] [,57] [,58] [,59] [,60] [,61]
+[1,]     0     0     0     0     0     0     0     0     0     0     0     0
+[2,]     0     0     0     0     0     0     0     0     0     0     0     0
+[3,]     0     0     0     0     0     0     0     0     0     0     0     0
+[4,]     0     0     0     0     0     0     0     0     0     0     0     0
+[5,]     0     0     0     0     0     0     0     0     0     0     0     0
+[6,]     0     0     0     0     0     0     0     0     0     0     0     0
+     [,62] [,63] [,64] [,65] [,66] [,67] [,68] [,69]
+[1,]     0     0     0     0     0     0     0     0
+[2,]     0     0     0     0     0     0     0     0
+[3,]     0     0     0     0     0     0     0     0
+[4,]     0     0     0     0     0     0     0     0
+[5,]     0     0     0     0     0     0     0     0
+[6,]     0     0     0     0     0     0     0     0</code></pre>
+<pre class="r"><code>escores &lt;- round(t(e) %*% t(z),2)
+head(escores[,1:6])</code></pre>
+<pre><code>      [,1]  [,2]  [,3]  [,4]  [,5]  [,6]
+[1,]  0.38  2.40  0.33 -2.98  2.51  1.18
+[2,] -0.08 -1.27 -0.46 -0.43  0.44 -0.15
+[3,] -0.45 -2.55 -0.38 -1.96  2.19 -0.16
+[4,] -0.26 -0.09 -0.96 -0.91  0.34 -0.28
+[5,]  0.77  1.55 -0.38 -0.51  1.07  0.64
+[6,] -0.18  2.38  1.87  0.78 -0.01  0.11</code></pre>
+<pre class="r"><code>plot(escores[2,] ~ escores[1,], cex = 0.7,
+     main = &quot;Gráfico dos escores da PC1 e PC2&quot;)</code></pre>
+<p><img src="scripts_files/figure-html/pca-3.png" width="672" /></p>
+<pre class="r"><code>plot(escores[1,] ~ z[,1], cex = 0.7,
+     main = &quot;Gráfico dos escores da PC1 e com z1&quot;)</code></pre>
+<p><img src="scripts_files/figure-html/pca-4.png" width="672" /></p>
+<pre class="r"><code>plot(escores[1,] ~ z[,2], cex = 0.7,
+     main = &quot;Gráfico dos escores da PC1 e com z2&quot;)</code></pre>
+<p><img src="scripts_files/figure-html/pca-5.png" width="672" /></p>
+<pre class="r"><code>#### Função do R
+PCA &lt;- prcomp(dados2,
+              scale = TRUE)
+names(PCA)</code></pre>
+<pre><code>[1] &quot;sdev&quot;     &quot;rotation&quot; &quot;center&quot;   &quot;scale&quot;    &quot;x&quot;       </code></pre>
+<pre class="r"><code>PCA$sdev</code></pre>
+<pre><code> [1] 2.33053692 2.07113712 1.99037027 1.79046301 1.76946325 1.73961819
+ [7] 1.65050566 1.64702006 1.50904179 1.46371283 1.44980906 1.39368337
+[13] 1.36099492 1.33960227 1.32364525 1.30921654 1.30354354 1.28298824
+[19] 1.23261694 1.21656121 1.16499676 1.13953437 1.12065109 1.10595614
+[25] 1.09639590 1.08238931 1.03021414 1.02359350 0.97840833 0.95378009
+[31] 0.91139334 0.88841962 0.86693860 0.85934101 0.81545878 0.79376096
+[37] 0.77661544 0.73319490 0.71681477 0.67419805 0.56799674 0.33349352
+[43] 0.16976533 0.15699655 0.12672171 0.10999795 0.08854047 0.08458641
+[49] 0.08437909 0.07869774 0.07815397 0.07779928 0.07059474 0.06969725
+[55] 0.06512958 0.06193670 0.05472577 0.05355356 0.05182786 0.04875852
+[61] 0.04415421 0.04215954 0.04050730 0.03843847 0.03768120 0.03634228
+[67] 0.03476658 0.03239357 0.02886353</code></pre>
+<pre class="r"><code>head(PCA$rotation)</code></pre>
+<pre><code>                                     PC1          PC2           PC3        PC4
+days_from_entrance            0.05196031 -0.039923118 -0.0006906079 0.07630754
+age                           0.10145881 -0.005528985 -0.1133311393 0.13066939
+delta_collect_timestamp_t.t1  0.04051769 -0.045237804 -0.0265228270 0.12262810
+delta_collect_timestamp_t1.t2 0.04894813 -0.084595216 -0.0433458765 0.10845428
+delta_collect_timestamp_t2.t3 0.04437257 -0.053054762 -0.0206716266 0.11252122
+delta_collect_timestamp_t3.t4 0.04659367 -0.058285338 -0.0244751443 0.11141296
+                                      PC5        PC6         PC7        PC8
+days_from_entrance            -0.07056360  0.1780909 -0.01559373 0.03297033
+age                           -0.15315485 -0.1280307  0.01536030 0.02747249
+delta_collect_timestamp_t.t1  -0.09038343  0.2686814 -0.02854560 0.03383371
+delta_collect_timestamp_t1.t2 -0.08200748  0.2940451 -0.02063265 0.02818113
+delta_collect_timestamp_t2.t3 -0.09460226  0.2694710 -0.01923088 0.04041070
+delta_collect_timestamp_t3.t4 -0.09055836  0.2700253 -0.02640218 0.02752014
+                                       PC9        PC10         PC11       PC12
+days_from_entrance            -0.029761673  0.04495629 -0.038128953 0.14412414
+age                           -0.003217278 -0.00557327 -0.008772432 0.03243933
+delta_collect_timestamp_t.t1  -0.031967013  0.01812432 -0.049620121 0.19060340
+delta_collect_timestamp_t1.t2 -0.029834478  0.04338572 -0.069199653 0.21792473
+delta_collect_timestamp_t2.t3 -0.020346299  0.04949604 -0.061655740 0.19238718
+delta_collect_timestamp_t3.t4 -0.014998919  0.04920538 -0.057942047 0.21149034
+                                     PC13        PC14         PC15         PC16
+days_from_entrance            -0.01335699  0.05562987 -0.078795060 -0.028155007
+age                           -0.00396641 -0.01543216  0.007867916  0.009492862
+delta_collect_timestamp_t.t1  -0.01113659  0.04890618 -0.069740796 -0.003670364
+delta_collect_timestamp_t1.t2 -0.02239938  0.05083190 -0.057414259 -0.023990659
+delta_collect_timestamp_t2.t3 -0.01773333  0.04844542 -0.088537099 -0.024915012
+delta_collect_timestamp_t3.t4 -0.02301447  0.06847468 -0.065099651  0.002861046
+                                      PC17        PC18        PC19        PC20
+days_from_entrance            -0.175468710  0.16229383 -0.09146901 0.047876543
+age                           -0.002301815 -0.04236558  0.04221746 0.007673696
+delta_collect_timestamp_t.t1  -0.128314327  0.09231898 -0.04873960 0.038735845
+delta_collect_timestamp_t1.t2 -0.149409347  0.11222205 -0.05899134 0.067415527
+delta_collect_timestamp_t2.t3 -0.172035185  0.13471399 -0.06484658 0.070802431
+delta_collect_timestamp_t3.t4 -0.151094359  0.12286001 -0.06432952 0.046083010
+                                     PC21         PC22       PC23       PC24
+days_from_entrance            -0.01179697 -0.033147459 0.06428777 0.02312760
+age                           -0.01520154  0.006227123 0.09868384 0.09121471
+delta_collect_timestamp_t.t1  -0.02947716  0.018182298 0.01238781 0.06166655
+delta_collect_timestamp_t1.t2 -0.02813511  0.030227405 0.01209530 0.07712637
+delta_collect_timestamp_t2.t3 -0.02124114 -0.012969914 0.01878862 0.03651303
+delta_collect_timestamp_t3.t4 -0.03310073  0.006020402 0.01414122 0.03945137
+                                      PC25         PC26        PC27
+days_from_entrance             0.002315443  0.015760436 -0.02661905
+age                           -0.030233418  0.004818914  0.10349342
+delta_collect_timestamp_t.t1  -0.049303355 -0.014803282 -0.02351533
+delta_collect_timestamp_t1.t2  0.002183913 -0.018535791  0.06026027
+delta_collect_timestamp_t2.t3 -0.049832905  0.007899967 -0.03603891
+delta_collect_timestamp_t3.t4 -0.044674522 -0.006474177 -0.01444918
+                                      PC28         PC29        PC30        PC31
+days_from_entrance            -0.069938547  0.148237023 -0.10726298 -0.60544996
+age                           -0.024438187  0.007275593  0.27677323  0.53435193
+delta_collect_timestamp_t.t1   0.003943374  0.074965963  0.04915241  0.25865223
+delta_collect_timestamp_t1.t2  0.016242944 -0.010552786  0.02460930  0.08042225
+delta_collect_timestamp_t2.t3 -0.052474062  0.072178983  0.05628093  0.01050646
+delta_collect_timestamp_t3.t4 -0.026219239  0.054339527 -0.03009388  0.14465076
+                                     PC32        PC33        PC34        PC35
+days_from_entrance             0.15407728  0.45076070 -0.36146603  0.01759927
+age                           -0.15330274  0.37223254 -0.51059924  0.00235086
+delta_collect_timestamp_t.t1  -0.05875678 -0.24197090  0.18986511 -0.18547715
+delta_collect_timestamp_t1.t2 -0.02648968 -0.06235426  0.04057180 -0.03834587
+delta_collect_timestamp_t2.t3 -0.05395764  0.05409146  0.05569101 -0.04649620
+delta_collect_timestamp_t3.t4 -0.03158604 -0.17876561  0.06150562  0.23923342
+                                     PC36         PC37        PC38        PC39
+days_from_entrance             0.08033295 -0.258514607 -0.05318645  0.04376065
+age                           -0.01350317 -0.005574151 -0.05682838  0.20184790
+delta_collect_timestamp_t.t1   0.57466697 -0.509459087 -0.09942670  0.05533638
+delta_collect_timestamp_t1.t2 -0.28045769  0.037238803  0.80449070  0.12720484
+delta_collect_timestamp_t2.t3  0.29928528  0.785876364 -0.18830821 -0.11756748
+delta_collect_timestamp_t3.t4 -0.63523261 -0.146140041 -0.48054319 -0.11201150
+                                     PC40          PC41         PC42
+days_from_entrance            -0.02739884  0.0069606680 -0.001003420
+age                           -0.20707717  0.1042878410  0.004104837
+delta_collect_timestamp_t.t1  -0.03982163 -0.0364793490  0.005831397
+delta_collect_timestamp_t1.t2  0.03460870 -0.0017305665 -0.073243774
+delta_collect_timestamp_t2.t3  0.03179812  0.0175780037 -0.017761544
+delta_collect_timestamp_t3.t4 -0.01089562  0.0004817956  0.031829676
+                                       PC43          PC44         PC45
+days_from_entrance             0.0007114874  0.0003329649 -0.004745006
+age                           -0.0052490099 -0.0083090983  0.004685340
+delta_collect_timestamp_t.t1   0.0011145117 -0.0001945844  0.011623190
+delta_collect_timestamp_t1.t2 -0.0003038391 -0.0021057932 -0.001449516
+delta_collect_timestamp_t2.t3  0.0003820639 -0.0004094872  0.010145219
+delta_collect_timestamp_t3.t4  0.0043300520 -0.0075228473  0.010140364
+                                      PC46         PC47          PC48
+days_from_entrance             0.002287546  0.001359126  0.0013548831
+age                           -0.004501267 -0.006149090  0.0013348043
+delta_collect_timestamp_t.t1  -0.010395929 -0.001246665  0.0023935208
+delta_collect_timestamp_t1.t2 -0.015020732 -0.003905707  0.0058048359
+delta_collect_timestamp_t2.t3  0.001271326 -0.002566479  0.0019659552
+delta_collect_timestamp_t3.t4  0.005699465 -0.008310591 -0.0008489059
+                                       PC49         PC50        PC51
+days_from_entrance             0.0003472376 0.0007866640 0.001824124
+age                            0.0001056269 0.0009640343 0.001381613
+delta_collect_timestamp_t.t1  -0.0016234769 0.0056681998 0.004987035
+delta_collect_timestamp_t1.t2  0.0038990819 0.0057327653 0.006378954
+delta_collect_timestamp_t2.t3 -0.0018322524 0.0040873520 0.003912739
+delta_collect_timestamp_t3.t4 -0.0061155062 0.0021429075 0.003825289
+                                      PC52          PC53          PC54
+days_from_entrance             0.003812758  0.0023914587  0.0037336226
+age                           -0.002002474 -0.0001978884 -0.0030440630
+delta_collect_timestamp_t.t1  -0.008385249 -0.0005868999  0.0003368973
+delta_collect_timestamp_t1.t2 -0.006101757 -0.0058879591 -0.0081367307
+delta_collect_timestamp_t2.t3 -0.004591682  0.0039993929  0.0034761929
+delta_collect_timestamp_t3.t4 -0.003104374 -0.0037677083 -0.0048857592
+                                       PC55         PC56          PC57
+days_from_entrance             0.0009680663 -0.005669528 -0.0021049901
+age                           -0.0002002756 -0.001685889 -0.0001896479
+delta_collect_timestamp_t.t1  -0.0010141562 -0.001756537  0.0015435182
+delta_collect_timestamp_t1.t2 -0.0011882557 -0.001229322  0.0002014796
+delta_collect_timestamp_t2.t3  0.0001408403 -0.001493030  0.0026253222
+delta_collect_timestamp_t3.t4 -0.0005435875 -0.004211860  0.0018068206
+                                       PC58          PC59          PC60
+days_from_entrance            -0.0012343720 -0.0014698738 -0.0013821217
+age                           -0.0001708861  0.0001059449 -0.0013899694
+delta_collect_timestamp_t.t1   0.0000374552 -0.0008699073 -0.0007279017
+delta_collect_timestamp_t1.t2  0.0012527270 -0.0007401731 -0.0001552939
+delta_collect_timestamp_t2.t3  0.0007260319 -0.0003689523 -0.0007393837
+delta_collect_timestamp_t3.t4  0.0006748524 -0.0014237001 -0.0003079648
+                                       PC61          PC62          PC63
+days_from_entrance            -0.0016763528 -0.0004244082 -0.0020579281
+age                            0.0008454965 -0.0002532596 -0.0007920315
+delta_collect_timestamp_t.t1   0.0018963252  0.0003941333 -0.0005601542
+delta_collect_timestamp_t1.t2  0.0014208145  0.0002009541  0.0002040305
+delta_collect_timestamp_t2.t3  0.0020488054  0.0001499459  0.0002158306
+delta_collect_timestamp_t3.t4  0.0021794989  0.0000752500 -0.0010203123
+                                       PC64          PC65          PC66
+days_from_entrance            -0.0021291953 -0.0004190947 -0.0029208591
+age                           -0.0001321222 -0.0003948016 -0.0013135234
+delta_collect_timestamp_t.t1  -0.0013928053 -0.0012436905 -0.0015263684
+delta_collect_timestamp_t1.t2 -0.0011514860 -0.0004494564 -0.0004132937
+delta_collect_timestamp_t2.t3 -0.0010729581 -0.0003996652 -0.0007499189
+delta_collect_timestamp_t3.t4 -0.0006943697 -0.0006466756 -0.0002144000
+                                       PC67          PC68          PC69
+days_from_entrance            -0.0007443706 -0.0003380322 -4.665865e-04
+age                           -0.0003206067  0.0002071746 -8.952346e-05
+delta_collect_timestamp_t.t1   0.0008852057 -0.0004645072  8.980301e-05
+delta_collect_timestamp_t1.t2  0.0008246316 -0.0004928337  8.127307e-05
+delta_collect_timestamp_t2.t3 -0.0002934918  0.0004587314  1.369132e-05
+delta_collect_timestamp_t3.t4 -0.0004406756  0.0005139809  5.776719e-04</code></pre>
+<pre class="r"><code>summary(PCA)</code></pre>
+<pre><code>Importance of components:
+                           PC1     PC2     PC3     PC4     PC5     PC6     PC7
+Standard deviation     2.33054 2.07114 1.99037 1.79046 1.76946 1.73962 1.65051
+Proportion of Variance 0.07872 0.06217 0.05741 0.04646 0.04538 0.04386 0.03948
+Cumulative Proportion  0.07872 0.14088 0.19830 0.24476 0.29014 0.33399 0.37348
+                           PC8    PC9    PC10    PC11    PC12    PC13    PC14
+Standard deviation     1.64702 1.5090 1.46371 1.44981 1.39368 1.36099 1.33960
+Proportion of Variance 0.03931 0.0330 0.03105 0.03046 0.02815 0.02685 0.02601
+Cumulative Proportion  0.41279 0.4458 0.47684 0.50731 0.53546 0.56230 0.58831
+                          PC15    PC16    PC17    PC18    PC19    PC20    PC21
+Standard deviation     1.32365 1.30922 1.30354 1.28299 1.23262 1.21656 1.16500
+Proportion of Variance 0.02539 0.02484 0.02463 0.02386 0.02202 0.02145 0.01967
+Cumulative Proportion  0.61370 0.63854 0.66317 0.68702 0.70904 0.73049 0.75016
+                          PC22   PC23    PC24    PC25    PC26    PC27    PC28
+Standard deviation     1.13953 1.1207 1.10596 1.09640 1.08239 1.03021 1.02359
+Proportion of Variance 0.01882 0.0182 0.01773 0.01742 0.01698 0.01538 0.01518
+Cumulative Proportion  0.76898 0.7872 0.80491 0.82233 0.83931 0.85469 0.86988
+                          PC29    PC30    PC31    PC32    PC33   PC34    PC35
+Standard deviation     0.97841 0.95378 0.91139 0.88842 0.86694 0.8593 0.81546
+Proportion of Variance 0.01387 0.01318 0.01204 0.01144 0.01089 0.0107 0.00964
+Cumulative Proportion  0.88375 0.89693 0.90897 0.92041 0.93130 0.9420 0.95164
+                          PC36    PC37    PC38    PC39    PC40    PC41    PC42
+Standard deviation     0.79376 0.77662 0.73319 0.71681 0.67420 0.56800 0.33349
+Proportion of Variance 0.00913 0.00874 0.00779 0.00745 0.00659 0.00468 0.00161
+Cumulative Proportion  0.96077 0.96952 0.97731 0.98475 0.99134 0.99602 0.99763
+                          PC43    PC44    PC45    PC46    PC47    PC48    PC49
+Standard deviation     0.16977 0.15700 0.12672 0.11000 0.08854 0.08459 0.08438
+Proportion of Variance 0.00042 0.00036 0.00023 0.00018 0.00011 0.00010 0.00010
+Cumulative Proportion  0.99805 0.99840 0.99864 0.99881 0.99893 0.99903 0.99913
+                          PC50    PC51    PC52    PC53    PC54    PC55    PC56
+Standard deviation     0.07870 0.07815 0.07780 0.07059 0.06970 0.06513 0.06194
+Proportion of Variance 0.00009 0.00009 0.00009 0.00007 0.00007 0.00006 0.00006
+Cumulative Proportion  0.99922 0.99931 0.99940 0.99947 0.99954 0.99960 0.99966
+                          PC57    PC58    PC59    PC60    PC61    PC62    PC63
+Standard deviation     0.05473 0.05355 0.05183 0.04876 0.04415 0.04216 0.04051
+Proportion of Variance 0.00004 0.00004 0.00004 0.00003 0.00003 0.00003 0.00002
+Cumulative Proportion  0.99970 0.99974 0.99978 0.99982 0.99984 0.99987 0.99989
+                          PC64    PC65    PC66    PC67    PC68    PC69
+Standard deviation     0.03844 0.03768 0.03634 0.03477 0.03239 0.02886
+Proportion of Variance 0.00002 0.00002 0.00002 0.00002 0.00002 0.00001
+Cumulative Proportion  0.99992 0.99994 0.99996 0.99997 0.99999 1.00000</code></pre>
+<pre class="r"><code>biplot(princomp(dados2, cor = T),
+       pc.biplot = T, cex = 0.8, expand = )</code></pre>
+<p><img src="scripts_files/figure-html/pca-6.png" width="672" /></p>
 </div>
 
 <center>

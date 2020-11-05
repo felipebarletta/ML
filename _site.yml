@@ -26,10 +26,10 @@ navbar:
       href: vital_signs.html 
     - text: "Desafios"
       href: desafios.html
-#    - text: "Dados"
-#      menu:
-#      - text: "hospital.csv"
-#        href: hospital.csv  
+    - text: "Dados"
+      menu:
+      - text: "hospital.csv"
+        href: hospital.csv
     - text: "Referências"
       href: referencias.html
     - text: "Recursos computacionais"
@@ -39,3 +39,7 @@ navbar:
       - text: "Slides"
       - text: "Aula 1 - Introdução a machine learning"
         href: slides/Aula1.pdf
+      - text: "Aula 2 - Pré-processamento dos dados"
+        href: slides/Aula2.pdf  
+      - text: "Aula 3 - Tipos de aprendizados"
+        href: slides/Aula3.pdf  

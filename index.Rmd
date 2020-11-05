@@ -87,17 +87,6 @@ background-size: 210px;
 ```
 
 
-
-```{R, echo=FALSE,warning=FALSE, message=FALSE,eval=FALSE}
-htmltools::img(src = knitr::image_uri(file.path("logo.png")), 
-               alt = 'logo', 
-               style = 'position:absolute; top:0; right:0; padding:10px;')
-               #style = 'float: right;padding-right:10px;height:125px;width:250px')
-
-#knitr::include_graphics("path/to/image.png", dpi = 100)
-
-```
-
 <br>
 <br>
 <br>
@@ -108,10 +97,25 @@ htmltools::img(src = knitr::image_uri(file.path("logo.png")),
 # **Projeto de Extensão**
 
 
+<div class="alert alert-danger" role="alert">
+
+**Atenção:**
+
+- As atividades(desafios) podem ser entregues até dia **16/11 as 23:59:59**
+
+- Importante entregar até a data estipulada para complementação da carga horária do curso e assim poder obter o certificado
+
+- As atividades podem ser enviadas aos e-mails: **fmendes@utfpr.edu.br** ou **angelicaribeiro@utfpr.edu.br**
+
+</div>
+
 O projeto de extensão "Introdução a *machine learning*" é ofertado pelo departamento de estatística da UTFPR para a comunidade que tenha interesse no tema.
 
 <div  style="background-color:gold;color:black;padding:20px;">
 
+- Carga horária:
+  - 15 horas de aulas síncronas
+  - 15 horas de atividades assíncronas passadas aos alunos pelo professor
 
 - Datas
   - Terças-feiras e quintas-feiras às 18h, nos dias 29/10, 03/11, 05/11, 10/11 e 12/11.

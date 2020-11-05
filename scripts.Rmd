@@ -16,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE,
                       comment = NA,
                       warning = FALSE,
                       message = FALSE)
+library(tidyquant)
 ```
 
 
@@ -27,12 +28,13 @@ knitr::opts_chunk$set(echo = TRUE,
 
 
 
-# Coleta de dados - exemplo 2
+# Coleta de dados
 
 
 ![](img/R_SQL_AWS.png)
 
 ### Coletando dados do S3 AWS
+
 ```{r s3 ,eval = FALSE}
 #### Carrega o pacote para acessar s3 da aws pelo R
 library("aws.s3")
@@ -56,7 +58,7 @@ dim(PA_DATA)
 ```
 
 
-## Coletando os dados do Athena - AWS
+### Coletando os dados do Athena - AWS
 
 
 ```{R,athena ,eval = FALSE}
@@ -112,3 +114,624 @@ df <- data.frame(df)
 dim(df)
 names(df)
 ```
+
+# Pré-processamento dos dados
+
+### Carregando os dados - Dados de crédito 
+
+```{R dados}
+library(scorecard)
+library(tidyverse)
+
+data('germancredit')
+germancredit$ID <- 1:dim(germancredit)[1]
+head(germancredit[,c(2,5,11,20:22)], n = 5)
+```
+
+
+### Carregando os dados - Dados de hospital
+
+
+```{r hData}
+url <- 'https://felipebarletta.github.io/DAEST/hospital.csv'
+dados <- read.csv(url,
+                  h = TRUE,
+                  sep = '\t')
+```
+
+### Gráfico idade vs desfecho
+
+```{r GraphAge}
+library(ggplot2)
+ggplot(dados, aes(idade, fill = alta.motivo, colour = alta.motivo)) +
+    geom_density(alpha= 0.1, fill = 'white') + 
+  xlab('Idade em anos') + 
+  ylab('Densidade') +
+  theme_tq()
+```
+
+
+
+
+### Criando uma nova característica - faixa etária
+```{r,out.width='64%',faixa}
+
+dados$faixa_etaria <- ifelse(dados$idade > 55, 
+                             ">55 anos",
+                             "<=55 anos")
+```
+
+### Gráfico com a nova característica
+
+```{r,out.width='64%',graphFaixa}
+ggplot(dados, 
+       aes(y = factor(alta.motivo), 
+           x = idade, 
+           color = faixa_etaria)) +
+  geom_jitter(alpha = 0.7,
+              size = 1.5) + 
+  labs(x = "Idade em anos",
+       y = "") +
+  theme_tq()
+```
+
+### Tabela de frequência - alta vs faixa etária
+
+```{r,out.width='64%',Tab1}
+table(dados$alta.motivo,dados$faixa_etaria)
+```
+
+
+### Gráfico Temperatura do paciente vs desfecho
+
+```{r,out.width='64%',tempGraph}
+ggplot(dados, 
+       aes(y = factor(alta.motivo), 
+           x = temperatura, 
+           color = alta.motivo)) +
+  geom_jitter(alpha = 0.7,
+              size = 1.5) + 
+  labs(x = "Temperatura em graus Celsius",
+       y = "") +
+  theme_tq()
+
+```
+
+
+### Filtrando **out-lier** - Obtendo uma nova amostra
+
+```{r,out.width='64%', newSample}
+
+dados2 <- dados %>%
+  filter(temperatura > 0)
+
+ggplot(dados2, 
+       aes(y = factor(alta.motivo), 
+           x = temperatura, 
+           color = alta.motivo)) +
+  geom_jitter(alpha = 0.7,
+              size = 1.5) + 
+  labs(x = "Temperatura em graus Celsius",
+       y = "") +
+  theme_tq()
+```
+
+### Dados - hospital2
+
+```{r ts1}
+## Carregando os dados
+load('dados3.RData')
+
+## Formatando a data
+dados3$data <- as.Date(dados3$date, 
+                       format = "%Y-%m-%d",
+                       origin="2016-01-01")
+
+## Filtrando apenas classes óbito(1)
+dados4 <- dados3 %>%
+  filter(alta.motivo == 1)
+```
+
+### Resumindo as quantidades de de óbito por dia
+
+```{r tab2}
+
+df <- data.frame(table(dados4$data))
+
+colnames(df) <- c('Dia','Quantidade')
+df$Dia <- as.Date(df$Dia,
+                     format = "%Y-%m-%d",
+                     origin="2016-01-01")
+
+head(df)
+```
+
+### Gráfico temporal de óbitos diários
+
+```{R Graphts1}
+library(ggplot2)
+library(cowplot)
+library(timetk)
+library(tidyquant)
+library(tibbletime)
+
+# Axis limits c(min, max)
+min <- min(df$Dia)
+max <- max(df$Dia)
+seg <-as.Date(min+480)
+
+df <- as_tbl_time(df,index = Dia)
+#### zoom
+v3 <- df %>%
+      ggplot(aes(x=Dia, y=Quantidade)) +
+      geom_line(color = palette_light()[[1]], alpha = 0.5, size=1) +
+      geom_point(color = palette_light()[[1]]) +
+      geom_smooth(method = "loess", span = 0.2, se = TRUE, colour='darkorange') +
+      theme_tq() +
+      labs(title = "",
+        caption = "")  + xlab("Dias") + ylab("Quantidade de Óbitos") 
+   
+v3
+
+
+
+```
+
+
+### Selecionando uma amostra para visualização melhor
+
+```{R Graphts2}
+#### zoom
+v4 <- df %>%
+      filter_time("2017-01-01" ~ "2018-12-31") %>%
+      ggplot(aes(x=Dia, y=Quantidade)) +
+      geom_line(color = palette_light()[[1]], alpha = 0.5, size=1) +
+      geom_point(color = palette_light()[[1]]) +
+      geom_smooth(method = "loess", span = 0.2, se = TRUE, colour='darkorange') +
+      theme_tq() +
+      labs(title = "01/01/2017 à 31/12/2018",
+        caption = "")  + 
+   xlab("Dias") + 
+   ylab("Quantidade de Óbitos") 
+   
+v4
+```
+
+
+### Crindo uma característica nova - Dias da semana
+
+```{r week}
+df$w <- weekdays(df$Dia)
+```
+
+
+### Selecionando pacientes com alta
+
+```{r alta}
+dados4 <- dados3 %>%
+  filter(alta.motivo == 0)
+
+df <- data.frame(table(dados4$data))
+
+colnames(df) <- c('Dia','Quantidade')
+df$Dia <- as.Date(df$Dia,
+                     format = "%Y-%m-%d",
+                     origin="2016-01-01")
+
+# Axis limits c(min, max)
+min <- min(df$Dia)
+max <- max(df$Dia)
+seg <-as.Date(min+480)
+
+df <- as_tbl_time(df,index = Dia)
+#### zoom
+v3 <- df %>%
+    filter_time("2017-01-01" ~ "2018-12-31") %>%
+      ggplot(aes(x=Dia, y=Quantidade)) +
+      geom_line(color = palette_light()[[1]], alpha = 0.5, size=1) +
+      geom_point(color = palette_light()[[1]]) +
+      geom_smooth(method = "loess", span = 0.2, se = TRUE, colour='darkorange') +
+      theme_tq() +
+      labs(title = "01/01/2017 à 31/12/2018",
+        caption = "")  + 
+      xlab("Dias") + 
+      ylab("Quantidade de Alta") 
+   
+v3
+
+```
+
+
+### Mediana da quantidade de alta vs dia da semana
+
+```{r week2}
+df$w <- weekdays(df$Dia)
+tapply(df$Quantidade,df$w, median)
+
+```
+
+
+
+### Missing values (valores faltantes)
+
+```{R missing}
+
+library(DataExplorer)
+ 
+plot_missing(dados[,3:8]) 
+
+```
+
+
+### Criando uma nova caractrística - variável dicotômica UTI/Enfermaria
+
+```{r uti}
+table(dados$setor)
+dados$setor2 <- ifelse(dados$setor %in% c('UTIC',
+                                          'UTIG',
+                                          'UTIP'),
+                       'UTI',
+                       'Enfermaria') 
+table(dados$setor2)
+```
+
+
+
+```{R mis1}
+dados2 <- dados %>%
+  filter(temperatura > 0)
+
+
+uti1 <- ggplot(dados2, aes(y = factor(setor2), 
+                           x = temperatura, 
+                           color = setor2)) +
+         geom_jitter(alpha = 0.7, size = 1.5) + 
+         labs(x = "Temperatura em graus Celsius", y = "") +
+         theme_tq()
+
+
+idade2 <- dados2 %>%
+    filter(!is.na(sat_o2))
+
+uti2 <- ggplot(idade2, aes(y = factor(setor2), x = temperatura, color = setor2)) +
+        geom_jitter(alpha = 0.7,size = 1.5) +
+        labs(x = "Temperatura em graus Celsius", y = "") +
+        theme_tq()
+
+cowplot::plot_grid(uti1,
+                   uti2,
+                   labels = c('Com missing - sat_o2',
+                              'Sem missing - sat-O2'))
+
+```
+
+### Distribuição do desfecho na **UTI**
+
+#### Com missing - sat_o2
+```{r tabmiss1}
+round(prop.table(table(dados$alta.motivo[dados$setor2 == 'UTI'])),4)
+```
+#### Sem missing - sat_o2
+```{r tabmiss2}
+round(prop.table(table(idade2$alta.motivo[idade2$setor2 == 'UTI'])),4)
+```
+
+### Exemplo - dados faltantes
+
+```{R out.width='100%', missigTemp}
+
+p1 <- ggplot(dados, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+      geom_density(alpha= 0.1, fill = 'white') +
+      xlab('Temperatura em graus Celsius') +
+      ylab('Densidade') +
+      theme_tq()
+
+idade2 <- dados %>%
+    filter(!is.na(sat_o2))
+
+p2 <- ggplot(idade2, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+      geom_density(alpha= 0.1, fill = 'white') +
+      xlab('Temperatura em graus Celsius') +
+      ylab('Densidade') +
+      theme_tq()
+
+cowplot::plot_grid(p1,
+                   p2,
+                   labels = c('Com missing',
+                              'Sem missing'))
+```
+
+
+
+
+# Imputação
+
+- Algoritmo **KNN** *(k-nearest neighbors)*
+
+1. Recebe um dado não classificado;
+
+2. Define o tamanho da vizinhança (K);
+
+3. Mede a distância (Euclidiana) do novo; dado com todos os outros dados que já estão classificados;
+
+4. Obtém a menor ou menores distâncias;
+
+5. Verifica o valor de cada da um dos dados que tiveram a menor distância;
+
+6. Toma como resultado o valor que mais apareceu dentre os dados que tiveram as menores distâncias.
+
+
+
+```{r imp1}
+library(caret)
+missingdata <- preProcess(dados, method=c('scale','knnImpute'))
+
+
+library(RANN)  # library for knnInpute
+NewData <- predict(missingdata, 
+                     newdata = dados)
+#anyNA(NewData)
+
+p1 <- ggplot(dados, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+    geom_density(alpha= 0.1, fill = 'white') +
+    xlab('Temperatura em graus Celsius') +
+    ylab('Densidade') +
+    theme_tq()
+
+
+p2 <- ggplot(NewData, aes(temperatura, fill = alta.motivo, colour = alta.motivo)) +
+    geom_density(alpha= 0.1, fill = 'white') +
+    xlab('Temperatura em graus Celsius') +
+    ylab('Densidade') +
+    theme_tq()
+
+cowplot::plot_grid(p1,
+                   p2,
+                   labels = c('Com missing',
+                              'Sem missing'))
+```
+
+
+### Dados desbalanceados
+
+```{R credito}
+ggplot(germancredit, aes(creditability)) + 
+  geom_bar() +
+   theme_tq()
+
+```
+
+```{R saude}
+ggplot(dados, aes(alta.motivo)) + 
+  geom_bar()+
+   theme_tq()
+```
+
+
+# Correlação
+
+- Exemplos de correlação
+
+```{R corr}
+# Diagrama de dispersão
+# Plotando todos no mesmo gráfico
+par(mfrow=c(2,3))
+# Correlação perfeita positiva
+x<-seq(-100, 100)
+y1<-x*2.53
+plot(x, y1, main = "Correlação perfeita positiva",ylab = "y",col="blue")
+
+# Correlação perfeita negativa
+x<-seq(-100, 100)
+y2<- -x*2.53
+plot(x, y2, main = "Correlação perfeita negativa",ylab = "y",col="blue")
+
+# Alta correlação positiva
+y3<-rnorm(y1,y1,20)
+plot(x,y3,main="Alta correlação positiva",ylab = "y",col="blue")
+
+# Alta correlação
+y4<-rnorm(y1,(-1)*y1,20)
+plot(x,y4,main="Alta correlação negativa",ylab = "y",col="blue")
+
+# Baixa correlação positiva
+y5<-rnorm(y1,y1,500)
+plot(x,y5,main="Baixa correlação",ylab = "y",col="blue")
+
+# Correlação não linear
+y6<- rnorm(x, x^2, 1000)
+plot(x,y6,main="Correlação não linear",ylab = "y",col="blue")
+
+```
+
+
+#### Matriz de correlação
+
+
+```{R matrixCorr}
+x <- dados[,c(1,3:8)]
+
+#corrplot::corrplot(cor(na.omit(x)), method = 'number',type='upper')
+
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat <- cor.mtest(na.omit(x))
+#head(p.mat[, 1:5])
+
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot::corrplot(cor(na.omit(x)), method="color", col=col(200),  
+         type="upper", order="hclust", 
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45, #Text label color and rotation
+         # Combine with significance
+         p.mat = p.mat, sig.level = 0.05, insig = "blank", 
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE 
+         )
+
+```
+
+# Análise de Componentes principais
+
+- Suponha um vetor de características  $X_1, X_2,...,X_p$
+
+  $$Z_k = \phi_{1k}X_1 + \phi_{2k}X_2 +...+ \phi_{pk}X_p$$
+
+- A variância total dos dados é definida como:
+
+  $$\displaystyle{\sum_{j=1}^p}Var(Z_j) = \lambda_1+\lambda_2+...+\lambda_p$$
+
+- Assim, a proporção da variância explicada pela j-ésima componente principal é dada por:
+
+  $$ \displaystyle{\frac{\lambda_j}{\lambda_1+\lambda_2+...+\lambda_j}}$$
+
+
+
+- Os dados usados nesse exemplo podem ser encontrados em [https://github.com/laura-health/cbms2020](https://github.com/laura-health/cbms2020)
+```{r pca}
+
+dados <- read.csv('heg_sample_data.csv',
+                  header = TRUE,
+                  sep = ',')
+
+dim(dados)
+head(dados[,1:6])
+
+library(dplyr)
+
+dados2  <- dados %>%
+    select(-c('X',
+              'document.sexo',
+              'UTI',
+              'outcome')
+           )
+
+
+#### Matriz de covariância
+S <- round(cov(dados2),2)
+S[1:3,1:3]
+
+#### Matriz de correlação
+R <- round(cor(dados2),2)
+R[1:5,1:5]
+
+
+### Gráfico da matriz de correlação
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- cor.test(mat[, i], mat[, j], ...)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+# matrix of the p-value of the correlation
+p.mat <- cor.mtest(dados2)
+#head(p.mat[, 1:5])
+
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot::corrplot(cor(dados2), method="color", col=col(200),
+                   type="upper", order="hclust",
+                   number.cex = .07,
+                   tl.cex = 0.4,
+         addCoef.col = "black", # Add coefficient of correlation
+         tl.col="black", tl.srt=45, #Text label color and rotation
+         # Combine with significance
+         p.mat = p.mat, sig.level = 0.05, insig = "blank",
+         # hide correlation coefficient on the principal diagonal
+         diag=FALSE
+         )
+
+### Padronizando
+z <- scale(dados2)
+R <- round(cor(z),2)
+
+# Autovalores e autovetores
+autovalor.autovetor<- eigen(R)
+head(autovalor.autovetor$vectors)
+
+head(autovalor.autovetor$values)
+
+# Recebendo percentual das variâncias e porcentagem acumulativa
+var.porc  <-  autovalor.autovetor$values / sum(autovalor.autovetor$values)*100
+head(var.porc)
+
+var.acum  <- cumsum(var.porc)
+head(var.acum)
+
+
+porc.explic <- round(data.frame(autovalores = autovalor.autovetor$values,
+                                var.porc = var.porc,
+                                var.acum = var.acum), 3)
+
+head(porc.explic,28)
+
+plot(porc.explic$autovalores,
+     type = "b",
+     ylab = "Valor Autovalores",
+     xlab = "Número de autovalores",
+     axes = T)
+
+abline(h=1, col=2, lwd=2)
+
+# Matriz e dos coeficientes das combinações lineares referentes às componentes principais Yk
+
+e <- round(as.matrix(autovalor.autovetor$vector),3)
+head(e)
+
+e[c(1:3,28),c(1:3,28)]
+
+
+## C1 = -0.051*z1  -0.102*z2 -0.04*z3 ...-0.336*z28
+V <- round(diag(autovalor.autovetor$values),3)
+head(V)
+
+escores <- round(t(e) %*% t(z),2)
+head(escores[,1:6])
+
+plot(escores[2,] ~ escores[1,], cex = 0.7,
+     main = "Gráfico dos escores da PC1 e PC2")
+
+plot(escores[1,] ~ z[,1], cex = 0.7,
+     main = "Gráfico dos escores da PC1 e com z1")
+
+plot(escores[1,] ~ z[,2], cex = 0.7,
+     main = "Gráfico dos escores da PC1 e com z2")
+
+
+#### Função do R
+PCA <- prcomp(dados2,
+              scale = TRUE)
+names(PCA)
+
+PCA$sdev
+
+head(PCA$rotation)
+
+summary(PCA)
+
+biplot(princomp(dados2, cor = T),
+       pc.biplot = T, cex = 0.8, expand = )
+
+```
+
+
