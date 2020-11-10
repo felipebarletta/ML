@@ -42,4 +42,6 @@ navbar:
       - text: "Aula 2 - Pré-processamento dos dados"
         href: slides/Aula2.pdf  
       - text: "Aula 3 - Tipos de aprendizados"
-        href: slides/Aula3.pdf  
+        href: slides/Aula3.pdf
+      - text: "Aula 4 - Aprendizado não supervisionado e supervisionado"
+        href: slides/Aula4.pdf        

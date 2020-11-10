@@ -68,3 +68,33 @@ Por fim, elabore um diagrama resumindo seu objetivo e dados como apresentado em 
 
 - Com seus dados, aplique uma análise de componentes principais
 
+
+## Desafio 4
+
+**Com os dados coletados no desafio 1, faça:**
+
+- Uma análise utilizando o algoritmo *K-means*
+ 
+<br>
+ 
+-  Um modelo de aprendizado supervisionado.
+ 
+<br>
+ 
+- Compare seus resultados utilizando os métodos de árvores.
+
+   1. *Random forests.*
+   
+   2. *Gardient Boosting Machine.*
+
+<br>
+ 
+- Se for um problema de classificação, compare também com regressão logística ou multinomial.
+ 
+<br>
+ 
+- Se for um problema de regressão, compare também com regressão linear.
+ 
+<br> 
+ 
+- Em ambos os casos decida por um dos modelos e explique a sua escolha.

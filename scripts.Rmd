@@ -117,7 +117,7 @@ names(df)
 
 # Pré-processamento dos dados
 
-### Carregando os dados - Dados de crédito 
+### Carregando os dados - Dados de crédito
 
 ```{R dados}
 library(scorecard)
@@ -144,8 +144,8 @@ dados <- read.csv(url,
 ```{r GraphAge}
 library(ggplot2)
 ggplot(dados, aes(idade, fill = alta.motivo, colour = alta.motivo)) +
-    geom_density(alpha= 0.1, fill = 'white') + 
-  xlab('Idade em anos') + 
+    geom_density(alpha= 0.1, fill = 'white') +
+  xlab('Idade em anos') +
   ylab('Densidade') +
   theme_tq()
 ```
@@ -156,7 +156,7 @@ ggplot(dados, aes(idade, fill = alta.motivo, colour = alta.motivo)) +
 ### Criando uma nova característica - faixa etária
 ```{r,out.width='64%',faixa}
 
-dados$faixa_etaria <- ifelse(dados$idade > 55, 
+dados$faixa_etaria <- ifelse(dados$idade > 55,
                              ">55 anos",
                              "<=55 anos")
 ```
@@ -164,12 +164,12 @@ dados$faixa_etaria <- ifelse(dados$idade > 55,
 ### Gráfico com a nova característica
 
 ```{r,out.width='64%',graphFaixa}
-ggplot(dados, 
-       aes(y = factor(alta.motivo), 
-           x = idade, 
+ggplot(dados,
+       aes(y = factor(alta.motivo),
+           x = idade,
            color = faixa_etaria)) +
   geom_jitter(alpha = 0.7,
-              size = 1.5) + 
+              size = 1.5) +
   labs(x = "Idade em anos",
        y = "") +
   theme_tq()
@@ -185,12 +185,12 @@ table(dados$alta.motivo,dados$faixa_etaria)
 ### Gráfico Temperatura do paciente vs desfecho
 
 ```{r,out.width='64%',tempGraph}
-ggplot(dados, 
-       aes(y = factor(alta.motivo), 
-           x = temperatura, 
+ggplot(dados,
+       aes(y = factor(alta.motivo),
+           x = temperatura,
            color = alta.motivo)) +
   geom_jitter(alpha = 0.7,
-              size = 1.5) + 
+              size = 1.5) +
   labs(x = "Temperatura em graus Celsius",
        y = "") +
   theme_tq()
@@ -205,12 +205,12 @@ ggplot(dados,
 dados2 <- dados %>%
   filter(temperatura > 0)
 
-ggplot(dados2, 
-       aes(y = factor(alta.motivo), 
-           x = temperatura, 
+ggplot(dados2,
+       aes(y = factor(alta.motivo),
+           x = temperatura,
            color = alta.motivo)) +
   geom_jitter(alpha = 0.7,
-              size = 1.5) + 
+              size = 1.5) +
   labs(x = "Temperatura em graus Celsius",
        y = "") +
   theme_tq()
@@ -223,7 +223,7 @@ ggplot(dados2,
 load('dados3.RData')
 
 ## Formatando a data
-dados3$data <- as.Date(dados3$date, 
+dados3$data <- as.Date(dados3$date,
                        format = "%Y-%m-%d",
                        origin="2016-01-01")
 
@@ -269,8 +269,8 @@ v3 <- df %>%
       geom_smooth(method = "loess", span = 0.2, se = TRUE, colour='darkorange') +
       theme_tq() +
       labs(title = "",
-        caption = "")  + xlab("Dias") + ylab("Quantidade de Óbitos") 
-   
+        caption = "")  + xlab("Dias") + ylab("Quantidade de Óbitos")
+
 v3
 
 
@@ -290,10 +290,10 @@ v4 <- df %>%
       geom_smooth(method = "loess", span = 0.2, se = TRUE, colour='darkorange') +
       theme_tq() +
       labs(title = "01/01/2017 à 31/12/2018",
-        caption = "")  + 
-   xlab("Dias") + 
-   ylab("Quantidade de Óbitos") 
-   
+        caption = "")  +
+   xlab("Dias") +
+   ylab("Quantidade de Óbitos")
+
 v4
 ```
 
@@ -333,10 +333,10 @@ v3 <- df %>%
       geom_smooth(method = "loess", span = 0.2, se = TRUE, colour='darkorange') +
       theme_tq() +
       labs(title = "01/01/2017 à 31/12/2018",
-        caption = "")  + 
-      xlab("Dias") + 
-      ylab("Quantidade de Alta") 
-   
+        caption = "")  +
+      xlab("Dias") +
+      ylab("Quantidade de Alta")
+
 v3
 
 ```
@@ -357,8 +357,8 @@ tapply(df$Quantidade,df$w, median)
 ```{R missing}
 
 library(DataExplorer)
- 
-plot_missing(dados[,3:8]) 
+
+plot_missing(dados[,3:8])
 
 ```
 
@@ -371,7 +371,7 @@ dados$setor2 <- ifelse(dados$setor %in% c('UTIC',
                                           'UTIG',
                                           'UTIP'),
                        'UTI',
-                       'Enfermaria') 
+                       'Enfermaria')
 table(dados$setor2)
 ```
 
@@ -382,10 +382,10 @@ dados2 <- dados %>%
   filter(temperatura > 0)
 
 
-uti1 <- ggplot(dados2, aes(y = factor(setor2), 
-                           x = temperatura, 
+uti1 <- ggplot(dados2, aes(y = factor(setor2),
+                           x = temperatura,
                            color = setor2)) +
-         geom_jitter(alpha = 0.7, size = 1.5) + 
+         geom_jitter(alpha = 0.7, size = 1.5) +
          labs(x = "Temperatura em graus Celsius", y = "") +
          theme_tq()
 
@@ -468,7 +468,7 @@ missingdata <- preProcess(dados, method=c('scale','knnImpute'))
 
 
 library(RANN)  # library for knnInpute
-NewData <- predict(missingdata, 
+NewData <- predict(missingdata,
                      newdata = dados)
 #anyNA(NewData)
 
@@ -495,14 +495,14 @@ cowplot::plot_grid(p1,
 ### Dados desbalanceados
 
 ```{R credito}
-ggplot(germancredit, aes(creditability)) + 
+ggplot(germancredit, aes(creditability)) +
   geom_bar() +
    theme_tq()
 
 ```
 
 ```{R saude}
-ggplot(dados, aes(alta.motivo)) + 
+ggplot(dados, aes(alta.motivo)) +
   geom_bar()+
    theme_tq()
 ```
@@ -572,14 +572,14 @@ p.mat <- cor.mtest(na.omit(x))
 #head(p.mat[, 1:5])
 
 col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
-corrplot::corrplot(cor(na.omit(x)), method="color", col=col(200),  
-         type="upper", order="hclust", 
+corrplot::corrplot(cor(na.omit(x)), method="color", col=col(200),
+         type="upper", order="hclust",
          addCoef.col = "black", # Add coefficient of correlation
          tl.col="black", tl.srt=45, #Text label color and rotation
          # Combine with significance
-         p.mat = p.mat, sig.level = 0.05, insig = "blank", 
+         p.mat = p.mat, sig.level = 0.05, insig = "blank",
          # hide correlation coefficient on the principal diagonal
-         diag=FALSE 
+         diag=FALSE
          )
 
 ```
@@ -622,10 +622,12 @@ dados2  <- dados %>%
 
 #### Matriz de covariância
 S <- round(cov(dados2),2)
+dim(S)
 S[1:3,1:3]
 
 #### Matriz de correlação
 R <- round(cor(dados2),2)
+dim(R)
 R[1:5,1:5]
 
 
@@ -663,7 +665,7 @@ corrplot::corrplot(cor(dados2), method="color", col=col(200),
 
 ### Padronizando
 z <- scale(dados2)
-R <- round(cor(z),2)
+#R <- round(cor(z),2)
 
 # Autovalores e autovetores
 autovalor.autovetor<- eigen(R)
@@ -702,10 +704,14 @@ e[c(1:3,28),c(1:3,28)]
 
 
 ## C1 = -0.051*z1  -0.102*z2 -0.04*z3 ...-0.336*z28
+
+## C28 = -0.336*z1 + 0.011+z2 .....-0.013*z28
+
 V <- round(diag(autovalor.autovetor$values),3)
 head(V)
 
 escores <- round(t(e) %*% t(z),2)
+dim(t(escores))
 head(escores[,1:6])
 
 plot(escores[2,] ~ escores[1,], cex = 0.7,
@@ -723,7 +729,7 @@ PCA <- prcomp(dados2,
               scale = TRUE)
 names(PCA)
 
-PCA$sdev
+PCA$sdev^2
 
 head(PCA$rotation)
 
@@ -733,5 +739,3 @@ biplot(princomp(dados2, cor = T),
        pc.biplot = T, cex = 0.8, expand = )
 
 ```
-
-
