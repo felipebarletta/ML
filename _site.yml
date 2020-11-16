@@ -23,13 +23,19 @@ navbar:
     - text: "Script das aulas"
       href: scripts.html
     - text: "Script Jupyter"
-      href: vital_signs.html 
+      href: vital_signs.html
     - text: "Desafios"
       href: desafios.html
     - text: "Dados"
       menu:
       - text: "hospital.csv"
         href: hospital.csv
+      - text: "snsdata.csv"
+        href: snsdata.csv
+      - text: "predictions_validacao.csv"
+        href: predictions_validacao.csv
+      - text: "scripts_Deploy.zip"
+        href: predictions_validacao.csv
     - text: "Referências"
       href: referencias.html
     - text: "Recursos computacionais"
@@ -46,4 +52,6 @@ navbar:
       - text: "Aula 4 - Aprendizado não supervisionado e supervisionado"
         href: slides/Aula4.pdf
       - text: "Aula 5 - Extensão para aprendizado supervisionado"
-        href: slides/Aula5.pdf  
+        href: slides/Aula5.pdf
+      - text: "Deploy - Material produzido por Mateus Cichelero da Silva"
+        href: slides/deploy.pdf        

@@ -25,3 +25,14 @@ DataExplorer
 lattice
 caret
 RANN
+xgboost
+lime
+SHAPforxgboost
+nlme
+mgcv
+SDMTools
+pROC
+ROCR
+scales
+gridExtra
+data.table

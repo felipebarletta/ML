@@ -15,7 +15,8 @@ output:
 knitr::opts_chunk$set(echo = TRUE,
                       comment = NA,
                       warning = FALSE,
-                      message = FALSE)
+                      message = FALSE,
+                      cache = TRUE)
 library(tidyquant)
 ```
 
@@ -737,5 +738,716 @@ summary(PCA)
 
 biplot(princomp(dados2, cor = T),
        pc.biplot = T, cex = 0.8, expand = )
+
+```
+
+
+
+# Método *K-means*
+
+
+Para baizar os dados utilizados nesse exemplo, acesse [https://github.com/stedy/Machine-Learning-with-R-datasets](https://github.com/stedy/Machine-Learning-with-R-datasets) ou baixe da aba dados.
+
+
+
+```{R kmeans}
+
+dados <- read.csv('snsdata.csv',
+                  h = TRUE)
+head(dados)
+dim(dados)
+str(dados)
+
+### Verificando valores faltantes
+library(DataExplorer)
+plot_missing(dados)
+
+
+## Resumo da idade
+summary(dados$age)
+
+## Criando uma nova feature
+dados$age <- ifelse(dados$age >= 13 & dados$age < 20,
+                    dados$age, NA)
+
+summary(dados$age)
+
+## Resumo do gênero
+table(dados$gender,
+      useNA = 'ifany')
+
+## Criando uma nova característica
+dados$no_gender <- ifelse(is.na(dados$gender),
+                          1, 0)
+
+dados$female <- ifelse(dados$gender == "F" &
+                       !is.na(dados$gender),
+                       1, 0)
+
+## Imputação
+aggregate(data = dados,
+          age ~ gradyear,
+          mean,
+          na.rm = TRUE)
+
+## Criando uma nova característica
+ave_age <- ave(dados$age,
+               dados$gradyear,
+               FUN = function(x) mean(x, na.rm = TRUE))
+
+summary(ave_age)
+
+dados$age <- ifelse(is.na(dados$age),
+                    ave_age, dados$age)
+
+
+## Selecionando apenas features numéricas
+df <- dados[5:40]
+
+
+## Padronizando
+df_z <- as.data.frame(lapply(df, scale))
+
+
+## Dividindo em 5 clusters
+teen_clusters <- kmeans(x = df_z,
+                        centers = 5)
+
+# Avaliando os clusters
+teen_clusters$size
+
+teen_clusters$centers[,1:5]
+
+
+
+### Atribuindo os clusters
+dados$cluster <- teen_clusters$cluster
+
+##
+dados[1:5, c("cluster", "gender", "age", "friends")]
+
+## Agregando as características demográficas
+aggregate(data = dados,
+          age ~ cluster,
+          mean)
+
+table(dados$gender, dados$cluster)
+
+aggregate(data = dados,
+          female ~ cluster,
+          mean)
+
+aggregate(data = dados,
+          friends ~ cluster,
+          mean)
+
+```
+
+
+# Aprendizado supervisionado
+
+## Problema de classificação binária
+
+```{r binomial}
+rm(list=ls())
+library(dplyr)
+dados <- read.csv('hospital.csv',
+                  h = TRUE,
+                  sep = '\t')
+
+dados$alta.motivo2 <- ifelse(dados$alta.motivo == "Obito",
+                            1,0)
+dados$alta.motivo2 <- as.factor(dados$alta.motivo2)
+
+### criando novas características
+dados$faixa_etaria <- ifelse(dados$idade > 55,
+                             ">55 anos",
+                             "<=55 anos")
+
+
+dados$setor2 <- ifelse(dados$setor %in% c('UTIC',
+                                          'UTIG',
+                                          'UTIP'),
+                       'UTI',
+                       'Enfermaria')
+
+### filtrando temperatura inconsistente
+dados2 <- dados %>%
+  filter(temperatura > 0)
+
+##### Imputação
+library(caret)
+missingdata <- preProcess(dados2, method=c('scale','knnImpute'))
+
+
+library(RANN)  # library for knnInpute
+NewData <- predict(missingdata,
+                     newdata = dados2)
+
+##### Partição dos dados
+set.seed(12339)
+intrain <- caret::createDataPartition(y = NewData$alta.motivo,
+                                      p = 0.75,
+                                      list = FALSE)
+train <- NewData[intrain, ]
+test <- NewData[-intrain, ]
+
+# Parametriza a valiação cruzada.
+cv <- caret::trainControl(method = "repeatedcv",
+                          number = 2,
+                          repeats = 2,
+                          classProbs = T,
+                          search = "random",
+                          savePredictions = 'final')
+
+
+######### Regressão Logística
+set.seed(19991233)
+bin <- caret::train(alta.motivo ~ freq_respiratoria +
+                        pa_diastolica +
+                        pa_sistolica +
+                        sat_o2 +
+                        temperatura +
+                        faixa_etaria +
+                        setor2,
+                    data = train,
+                    method = "glm",
+                    trControl = cv,
+                    tuneLength = 5,
+                    metric = 'logLoss')
+
+bin
+bin$finalModel
+
+y1 <- predict(bin,
+              newdata = test)
+
+M_logistic <- confusionMatrix(y1,
+                              test$alta.motivo,
+                              positive = 'Obito')
+
+varimp <- varImp(bin)
+plot(varimp, main="Variable Importance")
+
+
+##### Ávore de decisão
+tree1 <- rpart::rpart(alta.motivo ~ freq_respiratoria +
+                          pa_diastolica +
+                          pa_sistolica +
+                          sat_o2 +
+                          temperatura +
+                          faixa_etaria +
+                          setor2,
+                      data = train,
+                      method="class",
+                      parms = list(split = "information",prior=c(.55,.45)),
+                      maxdepth=5)
+
+rattle::fancyRpartPlot(tree1, palettes = c('Greens','Reds'))
+
+y <- predict(tree1,
+             newdata = test,
+             type = 'class')
+
+M_tree <- confusionMatrix(y,
+                          test$alta.motivo,
+                          positive = 'Obito')
+
+predictions_prob <- predict(tree1,
+             newdata = test,
+             type = 'prob')
+
+test$predictions_prob <- predictions_prob[,1]
+
+test$Y <- ifelse(test$alta.motivo == 'Melhorado',1,
+                 0)
+test$Y <- as.factor(test$Y)
+
+
+
+
+######## Random Forest
+rf <- caret::train(alta.motivo ~ freq_respiratoria +
+                       pa_diastolica +
+                       pa_sistolica +
+                       sat_o2 +
+                       temperatura +
+                       faixa_etaria +
+                       setor2,
+                   data = train,
+                   method = "rf",
+                   trControl = cv,
+                   tuneLength = 5,
+                   metric = 'logLoss')
+
+rf
+rf$finalModel
+
+y2 <- predict(rf,
+              newdata = test)
+
+M_rf <- confusionMatrix(y2,
+                        test$alta.motivo,
+                        positive = 'Obito')
+
+varimp <- varImp(rf)
+plot(varimp, main="Variable Importance")
+
+
+
+######### Gradient Boosting Machine
+gbm <- caret::train(alta.motivo ~ freq_respiratoria +
+                        pa_diastolica +
+                        pa_sistolica +
+                        sat_o2 +
+                        temperatura +
+                        faixa_etaria +
+                        setor2,
+                    data = train,
+                    method = "gbm",
+                    trControl = cv,
+                    tuneLength = 2,
+                    metric = 'logLoss',
+                    verbose = FALSE)
+
+gbm
+gbm$finalModel
+
+y3 <- predict(gbm,
+              newdata = test)
+
+M_gbm <- confusionMatrix(y3,
+                         test$alta.motivo,
+                         positive = 'Obito')
+
+
+
+########## Comparando os modelos
+# Compare model performances using resample()
+models_compare <- caret::resamples(list(RF=rf, GLM=bin, GBM=gbm),
+                            positive='Obito')
+
+# resumo das performances
+summary(models_compare, positive='Obito')
+
+# box plots comparando os modelos
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(models_compare, scales=scales)
+
+
+
+
+
+########################################################################
+# Extreme Gradient Boosting Machine - xgboost
+########################################################################
+
+# selecionando features
+features <- setdiff(names(train),
+                    c("pa_media","idade","setor","alta.motivo","alta.motivo2"))
+features
+
+# Preparando as features para one-hot-encoding
+treatplan <- vtreat::designTreatmentsZ(train, features, verbose = FALSE)
+treatplan
+
+# Criando as novas features
+new_vars <- treatplan %>%
+  magrittr::use_series(scoreFrame) %>%
+  dplyr::filter(code %in% c("clean", "lev")) %>%
+  magrittr::use_series(varName)
+
+# Preparando o dataset treino
+features_train <- vtreat::prepare(treatplan,
+                                  train,
+                                  varRestriction = new_vars) %>%
+    as.matrix()
+head(features_train)
+
+
+
+response_train <- train$alta.motivo2
+head(response_train)
+
+
+# Preparando o dataset teste
+features_test <- vtreat::prepare(treatplan,
+                                 test,
+                                 varRestriction = new_vars) %>%
+    as.matrix()
+response_test <- test$alta.motivo2
+
+
+
+dim(features_train)
+dim(features_test)
+
+
+# XGBoost
+library(xgboost)
+set.seed(123)
+
+# parameter list
+params <- list(
+    eta = 0.01,
+    max_depth = 4,
+    subsample = 0.75,
+    colsample_bytree = 1,
+    gamma = 0.5
+)
+
+set.seed(123456)
+xgb.fit1 <-xgboost(
+    params = params,
+  data = features_train,
+  label = as.character(response_train),
+  nrounds = 2999,
+ # nfold = 5,
+  objective = "reg:logistic",
+  verbose = 0
+)
+xgb.fit1
+
+evaluation <- data.frame(xgb.fit1$evaluation_log)
+# get number of trees that minimize error
+evaluation %>%
+  dplyr::summarise(
+    ntrees.train = which(train_rmse == min(train_rmse))[1],
+    rmse.train   = min(train_rmse)
+    )
+
+
+
+importance_matrix <- xgb.importance(model = xgb.fit1)
+xgb.plot.importance(importance_matrix,
+                    top_n = 6,
+                    measure = "Gain")
+
+## Predição do modelo - prob
+pred.XG <- predict(xgb.fit1, features_test)
+
+## Predição do modelo - classe
+y.XG <- ifelse(pred.XG > .5,
+               'Obito',
+               'Melhorado')
+y.XG <- as.factor(y.XG)
+
+M_XG <- confusionMatrix(y.XG,
+                        test$alta.motivo,
+                        positive = 'Obito')
+
+M_XG
+
+
+
+########################################################################
+### LIME E SHAP
+########################################################################
+# selecionando dois exemplos para predição local.
+local_obs <- test[1:2,]
+local_obs_onehot <- vtreat::prepare(treatplan,
+                                    local_obs,
+                                    varRestriction = new_vars)
+
+#####LIME
+library(lime)
+explainer <- lime(data.frame(features_train),
+                  xgb.fit1)
+explanation <- explain(local_obs_onehot,
+                       explainer,
+                       n_features = 5)
+plot_features(explanation)
+
+
+
+##### SHAP
+library("SHAPforxgboost")
+shap_values <- shap.values(xgb_model = xgb.fit1,
+                           X_train = features_train)
+
+shap.plot.summary.wrap1(xgb.fit1,
+                        X = features_train)
+
+
+
+
+
+################## GAM #################################
+train$faixa_etaria_lev_x_lt_eq_55_anos <-features_train[,6]
+train$faixa_etaria_lev_x_gt_55_anos <-features_train[,7]
+train$setor2_lev_x_Enfermaria <-features_train[,8]
+train$setor2_lev_x_UTI <-features_train[,9]
+
+test$faixa_etaria_lev_x_lt_eq_55_anos <-features_test[,6]
+test$faixa_etaria_lev_x_gt_55_anos <-features_test[,7]
+test$setor2_lev_x_Enfermaria <-features_test[,8]
+test$setor2_lev_x_UTI <-features_test[,9]
+
+gam <- caret::train(alta.motivo ~ freq_respiratoria +
+                        pa_diastolica +
+                        pa_sistolica +
+                        sat_o2 +
+                        temperatura +
+                        faixa_etaria_lev_x_lt_eq_55_anos +
+                        setor2_lev_x_Enfermaria,
+                        #setor2_lev_x_UTI +
+                        #faixa_etaria_lev_x_gt_55_anos,
+                    data = train,
+                    method = "gam",
+                    trControl = cv,
+                    tuneLength = 2,
+                    metric = 'logLoss')
+
+gam
+gam$finalModel
+
+y.gam <- predict(gam,
+                 newdata = test)
+
+M_gam <- confusionMatrix(y.gam,
+                test$alta.motivo,
+                positive = 'Obito')
+
+varimp <- varImp(gam)
+plot(varimp, main="Variable Importance")
+
+
+
+##################### Comparando os modelos
+metrics <- data.frame(Modelo = c('GLM', 'TREE','RF','GBM','XGBoost','GAM'),
+                          Acuracia = c(M_logistic$overall[1],M_tree$overall[1],M_rf$overall[1],M_gbm$overall[1],M_XG$overall[1],M_gam$overall[1]),
+                      Kappa = c(M_logistic$overall[2],M_tree$overall[2],M_rf$overall[2],M_gbm$overall[2],M_XG$overall[2],M_gam$overall[2]),
+                      Sensibilidade = c(M_logistic$byClass[1],M_tree$byClass[1],M_rf$byClass[1],M_gbm$byClass[1],M_XG$byClass[1],M_gam$byClass[1]),
+                      Especificidade=c(M_logistic$byClass[2],M_tree$byClass[2],M_rf$byClass[2],M_gbm$byClass[2],M_XG$byClass[2],M_gam$byClass[2]),
+                      Precision=c(M_logistic$byClass[5],M_tree$byClass[5],M_rf$byClass[5],M_gbm$byClass[5],M_XG$byClass[5],M_gam$byClass[5]),
+                      F1 = c(M_logistic$byClass[7],M_tree$byClass[7],M_rf$byClass[7],M_gbm$byClass[7],M_XG$byClass[7],M_gam$byClass[7])
+                      )
+
+metrics
+```
+
+
+
+# Peso de Evidência
+
+```{R woe}
+rm(list=ls())
+library(tidyverse)
+library(scorecard)
+##Carregando os dados
+data('germancredit')
+
+## Salvando os dados em um novo df
+dados  <-  germancredit %>%
+    as_tibble()
+
+#replace '.' in variable names not compatible with f_train_lasso
+vars  <-  names(dados) %>%
+    str_replace_all( '\\.', '_')
+
+names(dados) <- vars
+
+# convert response factor variable to dummy variable
+
+dados  <-  dados %>%
+    mutate( creditability = ifelse( creditability == 'bad', 1, 0 )
+         , creditability = as.factor(creditability) )
+
+head(dados$creditability)
+
+
+DataExplorer::plot_missing(dados)
+
+#### WoE
+bins  <- woebin(dados,
+                y = 'creditability')
+
+## Quantidade de crédito tomado
+bins$credit_amount
+woebin_plot(bins$credit_amount)
+
+## Quantidade de meses para pagar o empréstimo
+bins$duration_in_month
+woebin_plot(bins$duration_in_month)
+
+## Status do imóvel
+bins$housing
+woebin_plot(bins$housing)
+
+## Aplicando as partições das features
+dados_woe  <- woebin_ply( dados, bins ) %>%
+    as_tibble()
+
+names(dados_woe)
+head(dados_woe)
+
+
+##### Partição dos dados
+
+set.seed(12339)
+intrain <- caret::createDataPartition(y = dados_woe$creditability,
+                                      p = 0.75,
+                                      list = FALSE)
+train <- dados_woe[intrain, ]
+test <- dados_woe[-intrain, ]
+
+
+#### Ajustando um modelo
+
+
+bin <- glm(creditability ~ .,
+                    data = train,
+                    family = 'binomial')
+
+## Predição - prob
+y1 <- predict(bin,
+              newdata = test,
+              type = 'response')
+
+## Predição - classes
+test$pred <- ifelse(y1 > 0.5,
+                     1,0)
+
+library(SDMTools)
+t1 <- confusion.matrix(test$creditability,
+                       test$pred)
+
+t1
+
+tn <- t1[1]
+fp <- t1[2]
+fn <- t1[3]
+tp <- t1[4]
+
+## Calculando a sensibilidade e especificidade
+sensibilidade <- tp/(tp + fn)
+especificidade <- tn/(tn + fp)
+sensibilidade;especificidade
+
+
+
+########### Curva ROC
+library(pROC)
+rocobj <- roc(test$creditability,
+              y1)
+
+    gl <- ggroc(rocobj, legacy.axes = TRUE,color='#d07530')
+    auc <- round(rocobj$auc,4)
+    temp <- paste('AUC=', auc)
+    gl<-gl+ annotate("text", x = .75, y = .25,colour = "#d07530", size=6, label= temp, parse=TRUE)
+
+
+    gl + xlab("1-Especificidade") + ylab("Sensibilidade") +
+      geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), color='#d07530', linetype="dashed")
+```
+
+
+# Análise do ponto de corte - classificação binária
+
+```{r cutoff}
+rm(list=ls())
+dados<-read.csv('predictions_validacao.csv',
+                h=T,
+                sep=',')
+
+## Considerando que cometer o erro `FN` é 10 vezes mais "grave" que o erro `FP`.
+
+
+# função custo
+source("f_nao_balanceada.R")
+
+## Matriz de confusão com ponto de corte default
+cm_info <- ConfusionMatrixInfo(data = dados,
+                               predict = "predictions_prob",
+                               actual = "discharge_reason",
+                               cutoff = .5 )
+#cm_info$plot
+
+
+### Definindo penalidade para cada erro
+cost_fp <- 10
+cost_fn <- 50
+## Fazendo curva e escolhendo ponto de corte com base na função custo
+roc_info <- ROCInfo(data = cm_info$data,
+                    predict = "predict",
+                    actual = "actual",
+                    cost.fp = cost_fp,
+                    cost.fn = cost_fn)
+roc_info$cutoff
+
+grid.draw(roc_info$plot)
+
+
+cm_info <- ConfusionMatrixInfo(data = dados,
+                               predict = "predictions_prob",
+                               actual = "discharge_reason",
+                               cutoff = roc_info$cutoff)
+
+cm_info
+
+
+
+# Comparação dos pontos de corte
+
+
+## Ponto de corte $0.5$
+
+### Predição classe
+dados$prediction2<-ifelse(dados$predictions_prob>0.5,1,0)
+### Acurácia
+ac<-mean(dados$prediction2 == dados$discharge_reason)
+paste0('Acurácia=',round(ac,4))
+
+### Matriz de confusão
+library(SDMTools)
+t1<-confusion.matrix(dados$discharge_reason, dados$prediction2)
+t1
+
+### Definindo as estimativas de erro e acerto
+tn <- t1[1]
+fp <- t1[2]
+fn <- t1[3]
+tp <- t1[4]
+
+TP_.5 <- tp/(tp + fn)
+TN_.5 <- tn/(tn + fp)
+FP_.5 <- fp/(fp + tn)
+FN_.5 <- fn/(fn + tp)
+
+
+##Ponto de corte $`r (roc_info$cutoff)`$
+
+### Predição classe
+dados$pred3<-ifelse(dados$predictions_prob>roc_info$cutoff, 1, 0)
+### Acurácia
+ac_.03<-mean(dados$pred3 == dados$discharge_reason)
+paste0('Acurácia=',round(ac_.03,4))
+
+### Matriz de confusão
+library(SDMTools)
+t2<-confusion.matrix(dados$discharge_reason,dados$pred3)
+t2
+
+tn <- t2[1]
+fp <- t2[2]
+fn <- t2[3]
+tp <- t2[4]
+
+TP_.03 <- tp/(tp + fn)
+TN_.03 <- tn/(tn + fp)
+FP_.03 <- fp/(fp + tn)
+FN_.03 <- fn/(fn + tp)
+
+## Comparando as medidas
+matriz_c1<-matrix(c(TP_.5,TN_.5,FP_.5,FN_.5,TP_.03,TN_.03,FP_.03,FN_.03),
+                  ncol = 2, byrow = F)
+colnames(matriz_c1) <- c('Ponto de corte = 0.5',
+                         paste0('Ponto de corte = ', roc_info$cutoff))
+
+rownames(matriz_c1) <- c('Verdadeiro Positivo','Verdadeiro Negativo',
+                       'Falso Positivo','Falso negativo')
+
+matriz_c1
+
 
 ```
